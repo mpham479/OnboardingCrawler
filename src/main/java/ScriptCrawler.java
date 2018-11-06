@@ -213,6 +213,8 @@ public class ScriptCrawler {
 
         //check if test scripts
         if(!testFlag && !scriptName.toLowerCase().contains("test")){
+            getWorkflowsUsed(scriptSystemId,script);
+
             //get custom param usages
             getCustomParamsUsed(scriptCode,scriptSystemId,script);
 
@@ -257,6 +259,27 @@ public class ScriptCrawler {
 
         //return script id
         return id;
+    }
+
+    public static void getWorkflowsUsed(String scriptSystemId, Script script){
+        //check if scheduled task
+        if(script.getType().equalsIgnoreCase("Scheduled_Task")){
+            //get name
+            String workflowSysId = script.getName().substring(0,script.getName().indexOf(" ")).replaceAll("/[&\\/\\\\#,+()$~%.'\":*?<>{} _-]/g","");
+
+            //check if workflow exists
+            for(Map.Entry<String, Workflow> workflow : CrawlerController.workflowSystemIds.entrySet()){
+                if(workflow.getKey().equalsIgnoreCase(workflowSysId)){
+                    //add to script
+                    script.addUsedInWorkflow(workflow.getKey(),workflow.getValue());
+
+                    //add to workflow
+                    workflow.getValue().addUsedScripts(scriptSystemId,script);
+                    break;
+                }
+            }
+        }
+
     }
 
     public static void getCustomParamsUsed(String scriptCode, String scriptSystemId, Script script){
@@ -507,6 +530,12 @@ public class ScriptCrawler {
 
             //add the mentioned script to the current script
             script.addUsedScripts(usedScriptSystemId,scripts.get(usedScriptSystemId));
+
+            //add workflow usage
+            for(Workflow workflow : script.getUsedInWorkflow().values()){
+                scripts.get(usedScriptSystemId).addUsedInWorkflow(workflow.getName(),workflow);
+            }
+
         }else{
             usedScript = new Script();
             scripts.put(usedScriptSystemId,usedScript);
@@ -519,6 +548,11 @@ public class ScriptCrawler {
 
             //add the mentioned script to the current script
             script.addUsedScripts(usedScriptSystemId,usedScript);
+
+            //add workflow usage
+            for(Workflow workflow : script.getUsedInWorkflow().values()){
+                usedScript.addUsedInWorkflow(workflow.getName(),workflow);
+            }
         }
     }
 
@@ -683,6 +717,7 @@ public class ScriptCrawler {
                                 workflowName = map.get("Workflow");
                                 Workflow tempWorkflow = CrawlerController.workflowNames.get(workflowName);
                                 tempWorkflow.addUsedScripts(script.getSystemId(),script);
+                                script.addUsedInWorkflow(tempWorkflow.getName(),tempWorkflow);
 
                                 //go through custom fields
                                 for (String cfSysId : script.getUsesCustomFields().keySet()){

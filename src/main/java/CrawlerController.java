@@ -89,7 +89,7 @@ public class CrawlerController {
 
         //crawl custom fields
         CustomFieldCrawler customFieldCrawler = new CustomFieldCrawler();
-        //customFieldCrawler.startCustomFieldCrawling();
+        customFieldCrawler.startCustomFieldCrawling();
 
         //crawl scripts
         ScriptCrawler scriptCrawler = new ScriptCrawler();
@@ -232,6 +232,7 @@ public class CrawlerController {
             workflowInput.put("description",workflow.getDescription());
             workflowInput.put("usesScripts",workflow.getUsesScripts());
             workflowInput.put("usesCustomFields",workflow.getUsesCustomFields());
+            workflowInput.put("usesCustomParams",workflow.getUsesCustomParams());
 
             workflowInput.put("fileBasedLinks",fileBasedLinks);
             workflowInput.put("articleBaseUrl",articleBaseUrl);
@@ -337,6 +338,7 @@ public class CrawlerController {
             scriptInput.put("usedByScripts",script.getUsedByScripts());
             scriptInput.put("usesCustomFields",script.getUsesCustomFields());
             scriptInput.put("actionUsages",script.getActionUsages());
+            scriptInput.put("usesCustomParams",script.getUsesCustomParams());
 
             //format code for clickhelp
             if(script.getCode() != null && !fileBasedLinks && usedInClickHelp){

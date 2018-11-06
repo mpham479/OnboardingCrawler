@@ -269,6 +269,31 @@
 	  	</table>
 	</div>
 
+	<#if usesCustomParams?has_content>	
+		<div class="tableBlock">
+			<span class="h2Copy">Uses the following custom params:</span>
+			<table class="data">
+				<thead>
+					<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(0,this.parentElement.parentElement.parentElement)" sortdir="">Name <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
+				</thead>
+				<tbody>
+				<#foreach uses in usesCustomParams?values> 
+					<tr class='${["scriptOdd", "scriptEven"][uses_index%2]}'>
+		  				<td class="default">
+		  					<#if fileBasedLinks>
+		  						<a href="file:${uses.name}.html">${uses.name}</a>
+		  					<#else>
+		  						<a href="${articleBaseUrl + uses.name?replace('_',replaceSpacesInUrlsWith,'r')}">${uses.name}</a>
+		  					</#if>
+		  				</td>
+		  			</tr>
+				</#foreach>
+			</tbody>
+	  		</table>
+			 
+		</div>
+	</#if>
+
 	<#if usesScripts?has_content>	
 		<div class="tableBlock">
 			<span class="h2Copy">Calls the following scripts:</span>

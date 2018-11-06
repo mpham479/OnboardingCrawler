@@ -104,6 +104,7 @@ public class Script {
     public Map<String, Script> usedByScripts = new HashMap<>();            //systemid, script
     private Map<String, CustomField> usesCustomFields = new HashMap<>();    //systemid, customfield
     private Map<String, CustomParam> usesCustomParams = new HashMap<>();    //name, customparam
+    private Map<String, Workflow> usedInWorkflow = new HashMap<>();    //name, workflow
     private Set<Map<String,String>> actionUsages = new HashSet<>();
     private Set<Map<String,String>> tcUsages = new HashSet<>();
 
@@ -162,6 +163,10 @@ public class Script {
         return this.tcUsages;
     }
 
+    public Map<String, Workflow> getUsedInWorkflow() {
+        return usedInWorkflow;
+    }
+
     public void setId(String id){
         this.id = id;
     }
@@ -208,5 +213,9 @@ public class Script {
 
     public void addTcUsage(Map<String,String> usages){
         this.tcUsages.add(usages);
+    }
+
+    public void addUsedInWorkflow(String name, Workflow workflow) {
+        this.usedInWorkflow.put(name, workflow);
     }
 }
