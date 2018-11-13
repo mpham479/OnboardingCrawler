@@ -1,0 +1,9 @@
+baseUrl=https://demo.webcomserver.com/wpm/
+username=mpham
+password=Welcome@1
+tenant=cald_onboarding
+saveDirectory=C:\Users\mpham\IdeaProjects\Documenter\documentation
+fileBasedLinks=true
+usedInClickHelp=true
+articleBaseUrl=/articles/project-onboarding-standards/
+imgBaseUrl=/resources/Storage/project-onboarding-standards/documentation/

@@ -10,6 +10,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ public class ScriptCrawler {
 
     static Map<String, Script> scripts = CrawlerController.scripts;
     static Map<String, CustomField> customFields = CrawlerController.customFieldSystemIds;
+    static CrawlerProgressData data;
     static int totalNumberofScripts = 0;
     static int currentScriptNumber = 0;
     static double iteration = 0;
@@ -33,10 +35,20 @@ public class ScriptCrawler {
 
     }
 
-    public static void startScriptCrawling() throws InterruptedException {
+    public static void startScriptCrawling(CrawlerProgressData progressData) throws InterruptedException {
+
+        //bring to front
+        CrawlerController.progressFrame.toFront();
+
+        //set data
+        data = progressData;
 
         System.out.println("Starting Script Crawling");
         System.out.println();
+
+        //set tab
+        data.processes.setEnabledAt(3,true);
+        data.processes.setSelectedComponent(data.scriptData);
 
         //create new webdriver instance
         WebDriver driver = CrawlerController.driver;
@@ -69,6 +81,9 @@ public class ScriptCrawler {
 
             //define iterations
             iteration = 100/(double)totalNumberofScripts;
+
+            //specify percentage
+            data.customFieldProgress.setString("0% Starting...");
 
             //iterate through all children in root
             for(int x = 0; x < rootChildrenSize; x++){
@@ -256,6 +271,12 @@ public class ScriptCrawler {
         }
 
         System.out.print(String.format(format,sb,currentPercentageRounded,currentScriptNumber,totalNumberofScripts,script.name));
+
+        //set progress bar
+        data.scriptProgress.setValue(currentPercentageRounded);
+        data.scriptProgress.setString(String.format("%d%% (%d/%d)",currentPercentageRounded,currentScriptNumber, totalNumberofScripts));
+        data.scriptList.append(script.name + "\n");
+        data.scriptScroll.getViewport().setViewPosition(new Point(0,data.scriptList.getDocument().getLength()));
 
         //return script id
         return id;

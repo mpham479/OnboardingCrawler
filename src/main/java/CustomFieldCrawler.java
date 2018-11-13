@@ -9,20 +9,33 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("Duplicates")
 public class CustomFieldCrawler {
 
+    private static CrawlerProgressData data;
+
     public CustomFieldCrawler(){
 
     }
 
-    public static void startCustomFieldCrawling(){
+    public static void startCustomFieldCrawling(CrawlerProgressData progressData){
+
+        //bring to front
+        CrawlerController.progressFrame.toFront();
+
+        //initialize data
+        data = progressData;
 
         System.out.println("Starting Custom Field Crawling");
         System.out.println();
+
+        //set tab
+        data.processes.setEnabledAt(2,true);
+        data.processes.setSelectedComponent(data.customFieldData);
 
         //create new webdriver instance
         WebDriver driver = CrawlerController.driver;
@@ -80,6 +93,9 @@ public class CustomFieldCrawler {
         //get rows
         Elements rows = cfTable.getElementsByTag("tbody").get(0).getElementsByTag("tr");
 
+        //specify percentage
+        data.customFieldProgress.setString("0% Starting...");
+
         StringBuilder sb  =  new StringBuilder();
         String format = "\r[%-100s]%d%%\t\t|\t(%d/%d)\t%s";
 
@@ -129,6 +145,12 @@ public class CustomFieldCrawler {
                 format = "\r[%-100s]%d%%\t\t|\t(%d/%d) done!\n\n";
             }
             System.out.print(String.format(format,sb,currentPercentageRounded,(int)counter,rows.size(),name));
+
+            //set progress bar
+            data.customFieldProgress.setValue(currentPercentageRounded);
+            data.customFieldProgress.setString(String.format("%d%% (%d/%d)",currentPercentageRounded,(int)counter, rows.size()));
+            data.customFieldList.append(name + "\n");
+            data.customFieldScroll.getViewport().setViewPosition(new Point(0,data.customFieldList.getDocument().getLength()));
         }
     }
 

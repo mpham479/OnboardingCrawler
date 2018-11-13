@@ -5,14 +5,22 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.awt.*;
 import java.util.List;
 
 @SuppressWarnings("Duplicates")
 public class CustomParamCrawler {
-    public static void startCustomParamCrawling() throws InterruptedException {
+    public static void startCustomParamCrawling(CrawlerProgressData data) throws InterruptedException {
+
+        //bring to front
+        CrawlerController.progressFrame.toFront();
 
         System.out.println("Starting Custom Param Crawling");
         System.out.println();
+
+        //switch to this panel
+        data.processes.setEnabledAt(1,true);
+        data.processes.setSelectedComponent(data.customParamData);
 
         //create new webdriver instance
         WebDriver driver = CrawlerController.driver;
@@ -25,6 +33,8 @@ public class CustomParamCrawler {
 
         //check if all javascript has finished
         if(driver instanceof JavascriptExecutor){
+
+            data.customParamProgress.setString("0% Starting...");
 
             //get number of custom params
             Integer dataRows = Integer.parseInt(((JavascriptExecutor) driver).executeScript("" +
@@ -99,6 +109,12 @@ public class CustomParamCrawler {
                         format = "\r[%-100s]%d%%\t\t|\t(%d/%d) done!\n\n";
                     }
                     System.out.print(String.format(format,sb,currentPercentageRounded,counter,dataRows,name));
+
+                    //set progress bar
+                    data.customParamProgress.setValue(currentPercentageRounded);
+                    data.customParamProgress.setString(String.format("%d%% (%d/%d)",currentPercentageRounded,counter, dataRows));
+                    data.customParamList.append(name + "\n");
+                    data.customParamScroll.getViewport().setViewPosition(new Point(0,data.customParamList.getDocument().getLength()));
                 }
             }
         }

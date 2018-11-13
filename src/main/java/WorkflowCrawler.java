@@ -4,6 +4,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.awt.*;
 import java.util.Map;
 
 public class WorkflowCrawler {
@@ -12,7 +13,10 @@ public class WorkflowCrawler {
 
     }
 
-    public static void startWorkflowCrawling() throws InterruptedException {
+    public static void startWorkflowCrawling(CrawlerProgressData data) throws InterruptedException {
+
+        //bring to front
+        CrawlerController.progressFrame.toFront();
 
         System.out.println("Starting Workflow Crawling");
         System.out.println();
@@ -24,7 +28,10 @@ public class WorkflowCrawler {
         driver.get(CrawlerController.baseUrl + "sp/workflow/list");
 
         //wait until script fancytree is created
-        new WebDriverWait(driver,20).until(ExpectedConditions.presenceOfElementLocated(By.className("tableSection")));
+        //new WebDriverWait(driver,200).until(ExpectedConditions.presenceOfElementLocated(By.className("tableSection")));
+        new WebDriverWait(driver,200).until(ExpectedConditions.jsReturnsValue("document.getElementsByClassName(\"tableSection\")[0].getElementsByTagName(\"tbody\")[0]" +
+                ".scrollTo(0,document.getElementsByClassName(\"tableSection\")[0].getElementsByTagName(\"tbody\")[0].scrollHeight);" +
+                "return document.getElementsByClassName(\"tableSection\")[0].getElementsByTagName(\"tbody\")[0].scrollHeight"));
 
         //check if all javascript has finished
         if(driver instanceof JavascriptExecutor){
@@ -49,6 +56,9 @@ public class WorkflowCrawler {
             }
 
             Integer dataRows = Integer.parseInt(((JavascriptExecutor) driver).executeScript("return document.getElementsByClassName(\"data-row\").length").toString());
+
+            //specify percentage
+            data.workflowProgress.setString("0% Starting...");
 
             StringBuilder sb  =  new StringBuilder();
             String format = "\r[%-100s]%d%%\t\t|\t(%d/%d)\t%s";
@@ -96,6 +106,12 @@ public class WorkflowCrawler {
                     format = "\r[%-100s]%d%% done!\n\n";
                 }
                 System.out.print(String.format(format,sb,currentPercentageRounded,i+1,dataRows,name));
+
+                //set progress bar
+                data.workflowProgress.setValue(currentPercentageRounded);
+                data.workflowProgress.setString(String.format("%d%% (%d/%d)",currentPercentageRounded,i+1, dataRows));
+                data.workflowList.append(name + "\n");
+                data.workflowScroll.getViewport().setViewPosition(new Point(0,data.workflowList.getDocument().getLength()));
 
             }
         }
