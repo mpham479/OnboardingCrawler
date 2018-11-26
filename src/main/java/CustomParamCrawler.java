@@ -10,26 +10,25 @@ import java.util.List;
 
 @SuppressWarnings("Duplicates")
 public class CustomParamCrawler {
+
+    public static WebDriver driver;
+
+    public CustomParamCrawler(){
+
+    }
+
     public static void startCustomParamCrawling(CrawlerProgressData data) throws InterruptedException {
 
-        //bring to front
-        CrawlerController.progressFrame.toFront();
-
-        System.out.println("Starting Custom Param Crawling");
-        System.out.println();
-
-        //switch to this panel
-        data.processes.setEnabledAt(1,true);
-        data.processes.setSelectedComponent(data.customParamData);
+        checkInterrupted();
 
         //create new webdriver instance
-        WebDriver driver = CrawlerController.driver;
+        driver = new ChromeWebDriver().setupDriver();
 
         //go to url
         driver.get(CrawlerController.baseUrl + "sp/customparameters?tenantName=" + CrawlerController.tenant);
 
         //wait until script fancytree is created
-        new WebDriverWait(driver,20).until(ExpectedConditions.presenceOfElementLocated(By.tagName("wf-local-param-list")));
+        new WebDriverWait(driver,100).until(ExpectedConditions.presenceOfElementLocated(By.tagName("wf-local-param-list")));
 
         //check if all javascript has finished
         if(driver instanceof JavascriptExecutor){
@@ -48,8 +47,9 @@ public class CustomParamCrawler {
                     "} " +
                     "return counter").toString());
 
-            StringBuilder sb  =  new StringBuilder();
-            String format = "\r[%-100s]%d%%\t\t|\t(%d/%d)\t%s";
+            //got data, now display progress bar
+            data.customParamLoadingPanel.setVisible(false);
+            data.customParamProgressPanel.setVisible(true);
 
             double iteration = 100/dataRows.doubleValue();
             double currentCalculatedPercentage = 0;
@@ -59,6 +59,9 @@ public class CustomParamCrawler {
             List<WebElement>  outerHtml = driver.findElements(By.tagName("wf-local-param-list"));
 
             for(int i = 0; i < outerHtml.size(); i++) {
+
+                //check if interrupted
+                checkInterrupted();
 
                 //get element
                 WebElement outerDiv = outerHtml.get(i);
@@ -71,6 +74,22 @@ public class CustomParamCrawler {
 
                 //go through form groups
                 for(int j = 0; j < innerDivs.size(); j++) {
+                    //update data row numbers
+                    dataRows = Integer.parseInt(((JavascriptExecutor) driver).executeScript("" +
+                            "var counter = 0; " +
+                            "var list = document.getElementsByTagName(\"wf-local-param-list\"); " +
+                            "for(var i = 0; i < list.length; i++){" +
+                            "   var divs = list[i].getElementsByClassName(\"form-group\");" +
+                            "   if(divs.length > 0){" +
+                            "       counter += divs.length" +
+                            "   }" +
+                            "} " +
+                            "return counter").toString());
+
+                    //update data
+                    iteration = 100/dataRows.doubleValue();
+                    currentCalculatedPercentage = 0;
+                    currentPercentageRounded = 0;
                     //progress bar
                     counter++;
 
@@ -100,15 +119,9 @@ public class CustomParamCrawler {
 
                     if(currentCalculatedPercentage > currentPercentageRounded){
                         while(currentCalculatedPercentage > currentPercentageRounded){
-                            sb.append("|");
                             currentPercentageRounded += 1;
                         }
                     }
-                    if(counter == dataRows){
-                        //account for completion
-                        format = "\r[%-100s]%d%%\t\t|\t(%d/%d) done!\n\n";
-                    }
-                    System.out.print(String.format(format,sb,currentPercentageRounded,counter,dataRows,name));
 
                     //set progress bar
                     data.customParamProgress.setValue(currentPercentageRounded);
@@ -118,6 +131,11 @@ public class CustomParamCrawler {
                 }
             }
         }
+
+        data.processes.setBackgroundAt(data.processes.indexOfComponent(data.customParamData),Color.GREEN);
+
+        //close driver
+        driver.close();
     }
 
     private static String nullCheck(String string){
@@ -129,6 +147,20 @@ public class CustomParamCrawler {
             }else{
                 return string;
             }
+        }
+    }
+
+    private static void checkInterrupted() throws InterruptedException {
+        if(CrawlerController.interrupted){
+            try{
+                //close driver
+                driver.close();
+            }catch(Exception e){
+
+            }
+
+            //throw exception for thread
+            throw new InterruptedException("Interrupted");
         }
     }
 }

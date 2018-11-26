@@ -281,7 +281,7 @@
 					<tr class='${["scriptOdd", "scriptEven"][uses_index%2]}'>
 		  				<td class="default">
 		  					<#if fileBasedLinks>
-		  						<a href="file:${uses.name}.html">${uses.name}</a>
+		  						<a href="file:../customparams/${uses.name}.html">${uses.name}</a>
 		  					<#else>
 		  						<a href="${articleBaseUrl + uses.name?replace('_',replaceSpacesInUrlsWith,'r')}">${uses.name}</a>
 		  					</#if>
@@ -334,7 +334,7 @@
 					<tr class='${["scriptOdd", "scriptEven"][used_index%2]}'>
 						<td class="default">
 							<#if  fileBasedLinks>
-		  						<a href="file:${used.systemId}.html">${(used.name)!used.systemId}</a>
+		  						<a href="file:../scripts/${used.systemId}.html">${(used.name)!used.systemId}</a>
 		  					<#else>
 		  						<a href="${articleBaseUrl + used.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(used.name)!used.systemId}</a>
 		  					</#if>
@@ -367,6 +367,33 @@
 			  					</#if>
 			  				</td>
 			  				<td class="default">${(cf.systemId)!" "}</td>
+			  			</tr>
+					</#foreach>
+				</tbody>
+	  		</table>
+			 
+		</div>
+	</#if>
+
+	<#if usedInWorkflowName?has_content>	
+		<div class="tableBlock">
+			<span class="h2Copy">Used in the following workflows:</span>
+			<table class="data">
+				<thead>
+					<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(0,this.parentElement.parentElement.parentElement)" sortdir="">Name <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
+					<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(1,this.parentElement.parentElement.parentElement)" sortdir="">System Id <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
+				</thead>
+				<tbody>
+					<#foreach wf in usedInWorkflowName?values> 
+						<tr class='${["scriptOdd", "scriptEven"][wf_index%2]}'>
+							<td class="default">
+								<#if fileBasedLinks>
+			  						<a href="file:../workflows/${wf.systemId}.html">${(wf.name)!" "}</a>
+			  					<#else>
+			  						<a href="${articleBaseUrl + wf.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(wf.name)!" "}</a>
+			  					</#if>
+			  				</td>
+			  				<td class="default">${(wf.systemId)!" "}</td>
 			  			</tr>
 					</#foreach>
 				</tbody>

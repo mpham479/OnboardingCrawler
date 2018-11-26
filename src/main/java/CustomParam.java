@@ -8,8 +8,8 @@ public class CustomParam {
     private String description;
     private String type;
     private String category;
-    private Map<String, Script> usedByScripts = new HashMap<>();   //systemid, script
-    private Map<String, Workflow> usedInWorkflows = new HashMap<>();   //systemid, workflow
+    private HashMap<String, Script> usedByScripts = new HashMap<>();   //systemid, script
+    private HashMap<String, Workflow> usedInWorkflows = new HashMap<>();   //systemid, workflow
 
     /**
      * Constructor
@@ -34,11 +34,11 @@ public class CustomParam {
         return this.category;
     }
 
-    public Map<String, Script> getUsedByScripts(){
+    public HashMap<String, Script> getUsedByScripts(){
         return this.usedByScripts;
     }
 
-    public Map<String, Workflow> getUsedInWorkflows() {
+    public HashMap<String, Workflow> getUsedInWorkflows() {
         return usedInWorkflows;
     }
 
@@ -64,5 +64,13 @@ public class CustomParam {
 
     public void setUsedInWorkflows(String systemId, Workflow workflow){
         this.usedInWorkflows.put(systemId,workflow);
+    }
+
+    public void removeUsedByScripts(String systemId){
+        this.usedByScripts.remove(systemId);
+    }
+
+    public void removeUsedInWorkflows(String systemId){
+        this.usedInWorkflows.remove(systemId);
     }
 }

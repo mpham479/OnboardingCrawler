@@ -7,6 +7,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -20,6 +21,7 @@ public class ScriptCrawler {
 
     static Map<String, Script> scripts = CrawlerController.scripts;
     static Map<String, CustomField> customFields = CrawlerController.customFieldSystemIds;
+    static WebDriver driver;
     static CrawlerProgressData data;
     static int totalNumberofScripts = 0;
     static int currentScriptNumber = 0;
@@ -37,27 +39,19 @@ public class ScriptCrawler {
 
     public static void startScriptCrawling(CrawlerProgressData progressData) throws InterruptedException {
 
-        //bring to front
-        CrawlerController.progressFrame.toFront();
+        checkInterrupted();
 
         //set data
         data = progressData;
 
-        System.out.println("Starting Script Crawling");
-        System.out.println();
-
-        //set tab
-        data.processes.setEnabledAt(3,true);
-        data.processes.setSelectedComponent(data.scriptData);
-
         //create new webdriver instance
-        WebDriver driver = CrawlerController.driver;
+        driver = new ChromeWebDriver().setupDriver();
 
         //go to url
         driver.get(CrawlerController.baseUrl + "showScripts.do?method=prepare&tenantName=" + CrawlerController.tenant);
 
         //wait until script fancytree is created
-        new WebDriverWait(driver,20).until(ExpectedConditions.presenceOfElementLocated(By.id("tree")));
+        new WebDriverWait(driver,100).until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.id("tree")));
 
         //check if all javascript has finished
         if(driver instanceof JavascriptExecutor){
@@ -78,6 +72,10 @@ public class ScriptCrawler {
                     "if(node.folder != true && node.data.draftScriptId == null){numscripts++}" +
                     "}); " +
                     "return numscripts")));
+
+            //got data, now display progress bar
+            data.scriptLoadingPanel.setVisible(false);
+            data.scriptProgressPanel.setVisible(true);
 
             //define iterations
             iteration = 100/(double)totalNumberofScripts;
@@ -103,15 +101,25 @@ public class ScriptCrawler {
                         previousScriptId = navigateScripts(childRoot,testFlag, (x == rootChildrenSize-1), previousScriptId);
                     }
                 }
+
+                //check if thread should stop
+                checkInterrupted();
             }
 
         }
 
+        //color tab to signify finished
+        data.processes.setBackgroundAt(data.processes.indexOfComponent(data.scriptData),Color.GREEN);
+
+        //close driver
+        driver.close();
+
     }
 
-    public static String navigateFolder(String root, boolean testFlag, boolean lastFolder, String previousScriptId){
-        //get driver
-        WebDriver driver = CrawlerController.driver;
+    public static String navigateFolder(String root, boolean testFlag, boolean lastFolder, String previousScriptId) throws InterruptedException {
+
+        //check if thread should stop
+        checkInterrupted();
 
         //get folder name
         String folderName = String.valueOf(((JavascriptExecutor) driver).executeScript(root + ".title"));
@@ -146,9 +154,10 @@ public class ScriptCrawler {
         return changingScriptId;
     }
 
-    public static String navigateScripts(String root, boolean testFlag, boolean lastScript, String previousScriptId){
-        //get driver
-        WebDriver driver = CrawlerController.driver;
+    public static String navigateScripts(String root, boolean testFlag, boolean lastScript, String previousScriptId) throws InterruptedException {
+
+        //check if thread should stop
+        checkInterrupted();
 
         //vars
         String scriptName = "";
@@ -228,7 +237,12 @@ public class ScriptCrawler {
 
         //check if test scripts
         if(!testFlag && !scriptName.toLowerCase().contains("test")){
+
+            //get workflows used
             getWorkflowsUsed(scriptSystemId,script);
+
+            //get usages
+            saveWhereScriptsUsed(script, "");
 
             //get custom param usages
             getCustomParamsUsed(scriptCode,scriptSystemId,script);
@@ -249,28 +263,20 @@ public class ScriptCrawler {
             getFormRefreshElement(scriptCode,scriptSystemId,script);
             getFormSetValue(scriptCode,scriptSystemId,script);
 
-            //get usages
-            saveWhereScriptsUsed(script, "");
         }
 
         //advance progress bar
         currentScriptNumber++;
-        String format = "\r[%-100s]%d%%\t\t|\t(%d/%d)\t%s";
         currentCalculatedPercentage = currentScriptNumber*iteration;
 
         //check if percentage should be moved up
         if(currentCalculatedPercentage > currentPercentageRounded){
             while(currentCalculatedPercentage > currentPercentageRounded){
-                sb.append("|");
                 currentPercentageRounded += 1;
             }
         }
-        if(currentScriptNumber == (double)totalNumberofScripts){
-            //account for completion
-            format = "\r[%-100s]%d%%\t\t|\t(%d/%d) done!\n\n";
-        }
 
-        System.out.print(String.format(format,sb,currentPercentageRounded,currentScriptNumber,totalNumberofScripts,script.name));
+        //System.out.print(String.format(format,sb,currentPercentageRounded,currentScriptNumber,totalNumberofScripts,script.name));
 
         //set progress bar
         data.scriptProgress.setValue(currentPercentageRounded);
@@ -288,6 +294,7 @@ public class ScriptCrawler {
             //get name
             String workflowSysId = script.getName().substring(0,script.getName().indexOf(" ")).replaceAll("/[&\\/\\\\#,+()$~%.'\":*?<>{} _-]/g","");
 
+            /*
             //check if workflow exists
             for(Map.Entry<String, Workflow> workflow : CrawlerController.workflowSystemIds.entrySet()){
                 if(workflow.getKey().equalsIgnoreCase(workflowSysId)){
@@ -298,6 +305,15 @@ public class ScriptCrawler {
                     workflow.getValue().addUsedScripts(scriptSystemId,script);
                     break;
                 }
+            }
+            */
+            //add to script
+
+            Workflow workflow = new Workflow();
+            if(!nullCheck(workflowSysId).isEmpty() && !script.getUsedInWorkflowSysId().containsKey(workflowSysId)){
+                workflowSysId = workflowSysId.toLowerCase();
+                workflow.setSystemId(workflowSysId);
+                script.addUsedInWorkflowSysId(workflowSysId,workflow);
             }
         }
 
@@ -310,7 +326,13 @@ public class ScriptCrawler {
                     scriptCode.indexOf("(",index) + 2,
                     scriptCode.indexOf(")",index) - 1
             );
-
+            //add custom param
+            CustomParam param = new CustomParam();
+            if(!nullCheck(usedCustomParamName).isEmpty() && !script.getUsesCustomParams().containsKey(usedCustomParamName)){
+                param.setName(usedCustomParamName);
+                script.addUsesCustomParams(usedCustomParamName,param);
+            }
+            /*
             //get custom param
             if(CrawlerController.customParams.containsKey(usedCustomParamName)){
                 CustomParam cp = CrawlerController.customParams.get(usedCustomParamName);
@@ -321,6 +343,7 @@ public class ScriptCrawler {
                 //add to script
                 script.addUsesCustomParams(cp.getName(),cp);
             };
+            */
         }
     }
 
@@ -385,9 +408,18 @@ public class ScriptCrawler {
         //go through each instance
         for(int index = scriptCode.indexOf("form.getValue("); index >= 0; index = scriptCode.indexOf("form.getValue(",index+1)){
             String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 1,
-                    scriptCode.indexOf(")",index)
+                    scriptCode.indexOf("(",index)+2,
+                    scriptCode.indexOf(")",index)-1
             );
+
+            //add custom field
+            CustomField cf = new CustomField();
+            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                cf.setSystemId(customFieldSystemId);
+                script.addUsesCustomFields(customFieldSystemId,cf);
+            }
+
+            /*
             if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
                 //save scripts
                 customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
@@ -396,6 +428,7 @@ public class ScriptCrawler {
                 //error here
                 //System.out.println("Not saved: " + customFieldSystemId);
             }
+            */
         }
     }
 
@@ -403,9 +436,18 @@ public class ScriptCrawler {
         //go through each instance
         for(int index = scriptCode.indexOf("form.refreshElement("); index >= 0; index = scriptCode.indexOf("form.refreshElement(",index+1)){
             String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 1,
-                    scriptCode.indexOf(")",index)
+                    scriptCode.indexOf("(",index)+2,
+                    scriptCode.indexOf(")",index)-1
             );
+
+            //add custom field
+            CustomField cf = new CustomField();
+            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                cf.setSystemId(customFieldSystemId);
+                script.addUsesCustomFields(customFieldSystemId,cf);
+            }
+
+            /*
             if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
                 //save scripts
                 customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
@@ -414,6 +456,7 @@ public class ScriptCrawler {
                 //error here
                 //System.out.println("Not saved: " + customFieldSystemId);
             }
+            */
         }
     }
 
@@ -421,9 +464,18 @@ public class ScriptCrawler {
         //go through each instance
         for(int index = scriptCode.indexOf("form.getTableController("); index >= 0; index = scriptCode.indexOf("form.getTableController(",index+1)){
             String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 1,
-                    scriptCode.indexOf(")",index)
+                    scriptCode.indexOf("(",index)+2,
+                    scriptCode.indexOf(")",index) - 1
             );
+
+            //add custom field
+            CustomField cf = new CustomField();
+            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                cf.setSystemId(customFieldSystemId);
+                script.addUsesCustomFields(customFieldSystemId,cf);
+            }
+
+            /*
             if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
                 //save scripts
                 customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
@@ -432,6 +484,7 @@ public class ScriptCrawler {
                 //error here
                 //System.out.println("Not saved: " + customFieldSystemId);
             }
+            */
         }
     }
 
@@ -439,9 +492,18 @@ public class ScriptCrawler {
         //go through each instance
         for(int index = scriptCode.indexOf("form.getField("); index >= 0; index = scriptCode.indexOf("form.getField(",index+1)){
             String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 1,
-                    scriptCode.indexOf(")",index)
+                    scriptCode.indexOf("(",index)+2,
+                    scriptCode.indexOf(")",index) - 1
             );
+
+            //add custom field
+            CustomField cf = new CustomField();
+            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                cf.setSystemId(customFieldSystemId);
+                script.addUsesCustomFields(customFieldSystemId,cf);
+            }
+
+            /*
             if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
                 //save scripts
                 customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
@@ -450,6 +512,7 @@ public class ScriptCrawler {
                 //error here
                 //System.out.println("Not saved: " + customFieldSystemId);
             }
+            */
         }
     }
 
@@ -457,9 +520,18 @@ public class ScriptCrawler {
         //go through each instance
         for(int index = scriptCode.indexOf("form.setValue("); index >= 0; index = scriptCode.indexOf("form.setValue(",index+1)){
             String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 1,
-                    scriptCode.indexOf(",",index)
+                    scriptCode.indexOf("(",index)+2,
+                    scriptCode.indexOf(",",index) -1
             );
+
+            //add custom field
+            CustomField cf = new CustomField();
+            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                cf.setSystemId(customFieldSystemId);
+                script.addUsesCustomFields(customFieldSystemId,cf);
+            }
+
+            /*
             if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
                 //save scripts
                 customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
@@ -468,6 +540,7 @@ public class ScriptCrawler {
                 //error here
                 //System.out.println("Not saved: " + customFieldSystemId);
             }
+            */
         }
     }
 
@@ -475,9 +548,18 @@ public class ScriptCrawler {
         //go through each instance
         for(int index = scriptCode.indexOf(".getCustomFieldValue("); index >= 0; index = scriptCode.indexOf(".getCustomFieldValue(",index+1)){
             String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 1,
-                    scriptCode.indexOf(")",index)
+                    scriptCode.indexOf("(",index)+2,
+                    scriptCode.indexOf(")",index) - 1
             );
+
+            //add custom field
+            CustomField cf = new CustomField();
+            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                cf.setSystemId(customFieldSystemId);
+                script.addUsesCustomFields(customFieldSystemId,cf);
+            }
+
+            /*
             if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
                 //save scripts
                 customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
@@ -486,6 +568,7 @@ public class ScriptCrawler {
                 //error here
                 //System.out.println("Not saved: " + customFieldSystemId);
             }
+            */
         }
     }
 
@@ -493,9 +576,18 @@ public class ScriptCrawler {
         //go through each instance
         for(int index = scriptCode.indexOf(".setCustomField("); index >= 0; index = scriptCode.indexOf(".setCustomField(",index+1)){
             String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 1,
-                    scriptCode.indexOf(",",index)
+                    scriptCode.indexOf("(",index)+2,
+                    scriptCode.indexOf(",",index) - 1
             );
+
+            //add custom field
+            CustomField cf = new CustomField();
+            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                cf.setSystemId(customFieldSystemId);
+                script.addUsesCustomFields(customFieldSystemId,cf);
+            }
+
+            /*
             if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
                 //save scripts
                 customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
@@ -504,6 +596,7 @@ public class ScriptCrawler {
                 //error here
                 //System.out.println("Not saved: " + customFieldSystemId);
             }
+            */
         }
     }
 
@@ -511,9 +604,18 @@ public class ScriptCrawler {
         //go through each instance
         for(int index = scriptCode.indexOf(".getCustomField("); index >= 0; index = scriptCode.indexOf(".getCustomField(",index+1)){
             String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 1,
-                    scriptCode.indexOf(")",index)
+                    scriptCode.indexOf("(",index)+2,
+                    scriptCode.indexOf(")",index) - 1
             );
+
+            //add custom field
+            CustomField cf = new CustomField();
+            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                cf.setSystemId(customFieldSystemId);
+                script.addUsesCustomFields(customFieldSystemId,cf);
+            }
+
+            /*
             if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
                 //save scripts
                 customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
@@ -522,22 +624,7 @@ public class ScriptCrawler {
                 //error here
                 //System.out.println("Not saved: " + customFieldSystemId);
             }
-        }
-    }
-
-
-
-    private static void saveCustomFieldUsages(String scriptSystemId, String customFieldSystemId, Script script){
-        CustomField customField;
-
-        //check if the custom field has already been specified
-        if(customFields.containsKey(customFieldSystemId)) {
-            //get custom field
-            customField = customFields.get(customFieldSystemId);
-
-            //add to script and custom field
-            customField.addUsedByScripts(scriptSystemId, script);
-            script.addUsesCustomFields(customFieldSystemId, customField);
+            */
         }
     }
 
@@ -552,10 +639,15 @@ public class ScriptCrawler {
             //add the mentioned script to the current script
             script.addUsedScripts(usedScriptSystemId,scripts.get(usedScriptSystemId));
 
-            //add workflow usage
-            for(Workflow workflow : script.getUsedInWorkflow().values()){
-                scripts.get(usedScriptSystemId).addUsedInWorkflow(workflow.getName(),workflow);
+            //add workflows
+            for(Map.Entry<String, Workflow> workflow : script.getUsedInWorkflowName().entrySet()){
+                scripts.get(usedScriptSystemId).addUsedInWorkflowName(workflow.getKey(),workflow.getValue());
             }
+
+            for(Map.Entry<String, Workflow> workflow : script.getUsedInWorkflowSysId().entrySet()){
+                scripts.get(usedScriptSystemId).addUsedInWorkflowSysId(workflow.getKey(),workflow.getValue());
+            }
+
 
         }else{
             usedScript = new Script();
@@ -570,9 +662,13 @@ public class ScriptCrawler {
             //add the mentioned script to the current script
             script.addUsedScripts(usedScriptSystemId,usedScript);
 
-            //add workflow usage
-            for(Workflow workflow : script.getUsedInWorkflow().values()){
-                usedScript.addUsedInWorkflow(workflow.getName(),workflow);
+            //add workflows
+            for(Map.Entry<String, Workflow> workflow : script.getUsedInWorkflowName().entrySet()){
+                usedScript.addUsedInWorkflowName(workflow.getKey(),workflow.getValue());
+            }
+
+            for(Map.Entry<String, Workflow> workflow : script.getUsedInWorkflowSysId().entrySet()){
+                usedScript.addUsedInWorkflowSysId(workflow.getKey(),workflow.getValue());
             }
         }
     }
@@ -582,8 +678,6 @@ public class ScriptCrawler {
                 script.getType().equalsIgnoreCase("form")) {
 
             String usage = (script.getType().equalsIgnoreCase("workflow"))?"usage":"formScriptUsage";
-
-            WebDriver driver = CrawlerController.driver;
 
             //get previous value
             String previousResult = String.valueOf(((JavascriptExecutor) driver).executeScript("return window.htmlScriptUsage"));
@@ -614,7 +708,7 @@ public class ScriptCrawler {
             ((JavascriptExecutor) driver).executeScript(javascript);
 
             int counter = 0;
-            int max = 20;
+            int max = 100;
             //wait for async to finish
             while(true){
                 //get value
@@ -736,10 +830,13 @@ public class ScriptCrawler {
                             try{
                                 //add script usages as well
                                 workflowName = map.get("Workflow");
-                                Workflow tempWorkflow = CrawlerController.workflowNames.get(workflowName);
-                                tempWorkflow.addUsedScripts(script.getSystemId(),script);
-                                script.addUsedInWorkflow(tempWorkflow.getName(),tempWorkflow);
+                                //Workflow tempWorkflow = CrawlerController.workflowNames.get(workflowName);
+                                //tempWorkflow.addUsedScripts(script.getSystemId(),script);
+                                Workflow tempWorkflow = new Workflow();
+                                tempWorkflow.setName(workflowName);
+                                script.addUsedInWorkflowName(tempWorkflow.getName(),tempWorkflow);
 
+                                /*
                                 //go through custom fields
                                 for (String cfSysId : script.getUsesCustomFields().keySet()){
                                     //save if not in the workflow yet
@@ -747,6 +844,7 @@ public class ScriptCrawler {
                                         tempWorkflow.addUsesCustomFields(cfSysId,script.getUsesCustomFields().get(cfSysId));
                                     }
                                 }
+                                */
                             }catch(NullPointerException e){
                                 //error here
                                 //System.out.println("No workflow associated with: " + map + " for script: " + script.getName());
@@ -789,6 +887,20 @@ public class ScriptCrawler {
             return "";
         }else{
             return string;
+        }
+    }
+
+    private static void checkInterrupted() throws InterruptedException {
+        if(CrawlerController.interrupted){
+            try{
+                //close driver
+                driver.close();
+            }catch(Exception e){
+
+            }
+
+            //throw exception for thread
+            throw new InterruptedException("Interrupted");
         }
     }
 }

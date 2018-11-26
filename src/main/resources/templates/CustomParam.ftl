@@ -274,7 +274,7 @@
 						<tr class='${["scriptOdd", "scriptEven"][uses_index%2]}'>
 			  				<td class="default">
 			  					<#if fileBasedLinks>
-			  						<a href="file:${uses.systemId}.html">${(uses.name)!uses.systemId}</a>
+			  						<a href="file:../scripts/${uses.systemId}.html">${(uses.name)!uses.systemId}</a>
 			  					<#else>
 			  						<a href="${articleBaseUrl + uses.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(uses.name)!uses.systemId}</a>
 			  					</#if>
@@ -295,30 +295,20 @@
 					<thead>
 						<tr>
 							<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(0,this.parentElement.parentElement.parentElement)" sortdir="">Workflow <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
-							<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(1,this.parentElement.parentElement.parentElement)" sortdir="">Action Name <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
-							<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(2,this.parentElement.parentElement.parentElement)" sortdir="">Start Status <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
-							<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(3,this.parentElement.parentElement.parentElement)" sortdir="">End Status <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
-							<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(4,this.parentElement.parentElement.parentElement)" sortdir="">Description <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
 						</tr>
 					</thead>
 					<tbody>
 						<#foreach usage in usedInWorkflows?values>
-							<#if usage.Workflow?? && usage.Action?? && usage.StartStatus?? && usage.EndStatus?? && workflowNames??>
-								<#if workflowNames[usage.Workflow]??>
+							<#if usage.name??>
 								<tr class='${["scriptOdd", "scriptEven"][usage_index%2]}'>
 									<td class="default">
 										<#if fileBasedLinks>
-											<a href="file:../customfields/${(workflowNames[usage.Workflow].systemId)}.html">${usage.Workflow}</a>
+											<a href="file:../workflows/${usage.systemId}.html">${usage.name}</a>
 					  					<#else>
-					  						<a href="${articleBaseUrl + workflowNames[usage.Workflow].systemId?replace('_',replaceSpacesInUrlsWith,'r')}">usage.Workflow</a>
+					  						<a href="${articleBaseUrl + usage.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">usage.name</a>
 					  					</#if>
 									</td>
-									<td class="default" style="white-space:normal;">${(usage.Action)!" "}</td>
-									<td class="default">${(usage.StartStatus)!" "}</td>
-									<td class="default">${(usage.EndStatus)!" "}</td>
-									<td class="default" style="white-space:normal;">${(usage.Description)!" "}</td>
 								</tr>
-								</#if>
 							</#if>
 						</#foreach>
 					</tbody>

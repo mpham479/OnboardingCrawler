@@ -269,7 +269,7 @@
 	  	</table>
 	</div>
 
-	<#if usesScripts?has_content>	
+	<#if usedByScripts?has_content>	
 		<div class="tableBlock">
 			<span class="h2Copy">Used in the following scripts:</span>
 			<table class="data">
@@ -278,11 +278,38 @@
 					<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(1,this.parentElement.parentElement.parentElement)" sortdir="">System Id <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
 				</thead>
 				<tbody>
-					<#foreach uses in usesScripts?values> 
+					<#foreach uses in usedByScripts?values> 
 						<tr class='${["scriptOdd", "scriptEven"][uses_index%2]}'>
 			  				<td class="default">
 			  					<#if fileBasedLinks>
-			  						<a href="file:${uses.systemId}.html">${(uses.name)!uses.systemId}</a>
+			  						<a href="file:../scripts/${uses.systemId}.html">${(uses.name)!uses.systemId}</a>
+			  					<#else>
+			  						<a href="${articleBaseUrl + uses.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(uses.name)!uses.systemId}</a>
+			  					</#if>
+			  				</td>
+			  				<td class="default">${(uses.systemId)!" "}</td>
+			  			</tr>
+					</#foreach>
+				</tbody>
+	  		</table>
+			 
+		</div>
+	</#if>
+
+	<#if usedInWorkflow?has_content>	
+		<div class="tableBlock">
+			<span class="h2Copy">Used in the following workflows:</span>
+			<table class="data">
+				<thead>
+					<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(0,this.parentElement.parentElement.parentElement)" sortdir="">Name <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
+					<th class="colHeader clickableHeader noSelect imgHover" onclick="sortTable(1,this.parentElement.parentElement.parentElement)" sortdir="">System Id <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'></th>
+				</thead>
+				<tbody>
+					<#foreach uses in usedInWorkflow?values> 
+						<tr class='${["scriptOdd", "scriptEven"][uses_index%2]}'>
+			  				<td class="default">
+			  					<#if fileBasedLinks>
+			  						<a href="file:../workflows/${uses.systemId}.html">${(uses.name)!uses.systemId}</a>
 			  					<#else>
 			  						<a href="${articleBaseUrl + uses.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(uses.name)!uses.systemId}</a>
 			  					</#if>
@@ -298,7 +325,7 @@
 
 	<#if actionUsages?has_content>
 		<div class="tableBlock">
-			<span class="h2Copy">Used in the following workflows:</span>
+			<span class="h2Copy">Used in the following actions:</span>
 			<table class="data" id="data">
 					<thead>
 						<tr>
@@ -316,7 +343,7 @@
 								<tr class='${["scriptOdd", "scriptEven"][usage_index%2]}'>
 									<td class="default">
 										<#if fileBasedLinks>
-											<a href="file:../customfields/${(workflowNames[usage.Workflow].systemId)}.html">${usage.Workflow}</a>
+											<a href="file:../workflows/${(workflowNames[usage.Workflow].systemId)}.html">${usage.Workflow}</a>
 					  					<#else>
 					  						<a href="${articleBaseUrl + workflowNames[usage.Workflow].systemId?replace('_',replaceSpacesInUrlsWith,'r')}">usage.Workflow</a>
 					  					</#if>

@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -42,13 +43,18 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.swing.plaf.basic.BasicTextFieldUI;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
 import javax.swing.text.JTextComponent;
 
 @SuppressWarnings("Duplicates")
 public class CrawlerController {
     //create new webdriver instance
-    public static WebDriver driver;
     public static Map<String,Script> scripts = new TreeMap<>();
     public static Map<String,CustomField> customFieldNames = new TreeMap<>();
     public static Map<String,CustomField> customFieldSystemIds = new TreeMap<>();
@@ -56,21 +62,29 @@ public class CrawlerController {
     public static Map<String,Workflow> workflowSystemIds = new TreeMap<>();
     public static Map<String,CustomParam> customParams = new TreeMap<>();
     public static String chromeDriverLocation = System.getProperty("user.dir") + "\\src\\main\\resources\\driver\\chromedriver.exe";
-    public static String baseUrl = "https://demo.webcomserver.com/wpm/";
-    public static String username = "mpham";
-    public static String password = "Welcome@1";
-    public static String tenant = "cald_onboarding";
-    public static String saveDirectory = System.getProperty("user.dir");
-    public static Boolean fileBasedLinks = true;    //if false, changes links from "file:..." to articleUrl
-    public static Boolean usedInClickHelp = true;
+    public static String baseUrl;
+    public static String username;
+    public static String password;
+    public static String tenant;
+    public static String saveDirectory;
+    public static Boolean fileBasedLinks;    //if false, changes links from "file:..." to articleUrl
+    public static Boolean usedInClickHelp;
     public static String articleBaseUrl = "/articles/project-onboarding-standards/";
     public static String imgBaseUrl = "/resources/Storage/project-onboarding-standards/documentation/";
     public static String replaceSpacesInUrlsWith = "-";
+    public static WorkflowCrawler workflowCrawler;
+    public static CustomParamCrawler customParamCrawler;
+    public static CustomFieldCrawler customFieldCrawler;
+    public static ScriptCrawler scriptCrawler;
+    public static Boolean interrupted = false;
 
     public static JFrame frame;
     public static JFrame progressFrame;
 
     public CrawlerController() throws IOException {
+    }
+
+    public static void populateSettingsData() throws IOException {
         //check if settings.txt exists
         File settings = new File(System.getProperty("user.dir") + "\\src\\main\\resources\\settings\\settings.txt");
         if(settings.exists()){
@@ -78,38 +92,42 @@ public class CrawlerController {
             BufferedReader br = new BufferedReader(new FileReader(System.getProperty("user.dir") + "\\src\\main\\resources\\settings\\settings.txt"));
             String line;
             while ((line = br.readLine()) != null) {
-                //add to variables
-                String variable = line.split("=")[0];
-                String value = line.split("=")[1];
+                try{
+                    //add to variables
+                    String variable = line.split("=")[0];
+                    String value = line.split("=")[1];
 
-                switch (variable.toUpperCase()){
-                    case "BASEURL":
-                        baseUrl = value;
-                        break;
-                    case "USERNAME":
-                        username = value;
-                        break;
-                    case "PASSWORD":
-                        password = value;
-                        break;
-                    case "TENANT":
-                        tenant = value;
-                        break;
-                    case "SAVEDIRECTORY":
-                        saveDirectory = value;
-                        break;
-                    case "FILEBASEDLINKS":
-                        fileBasedLinks = Boolean.valueOf(value);
-                        break;
-                    case "USEDINCLICKHELP":
-                        usedInClickHelp = Boolean.valueOf(value);
-                        break;
-                    case "ARTICLEBASEURL":
-                        articleBaseUrl = value;
-                        break;
-                    case "IMGBASEURL":
-                        imgBaseUrl = value;
-                        break;
+                    switch (variable.toUpperCase()){
+                        case "BASEURL":
+                            baseUrl = value;
+                            break;
+                        case "USERNAME":
+                            username = value;
+                            break;
+                        case "PASSWORD":
+                            password = value;
+                            break;
+                        case "TENANT":
+                            tenant = value;
+                            break;
+                        case "SAVEDIRECTORY":
+                            saveDirectory = value;
+                            break;
+                        case "FILEBASEDLINKS":
+                            fileBasedLinks = Boolean.valueOf(value);
+                            break;
+                        case "USEDINCLICKHELP":
+                            usedInClickHelp = Boolean.valueOf(value);
+                            break;
+                        case "ARTICLEBASEURL":
+                            articleBaseUrl = value;
+                            break;
+                        case "IMGBASEURL":
+                            imgBaseUrl = value;
+                            break;
+                    }
+                }catch(Exception e){
+
                 }
             }
         }
@@ -121,10 +139,12 @@ public class CrawlerController {
      * event dispatch thread.
      */
     private static void createAndShowGUI() throws IOException {
+        populateSettingsData();
+
         CrawlerGatherData data = new CrawlerGatherData();
 
         //Create and set up the window.
-        frame = new JFrame("Documentation Crawler Data");
+        frame = new JFrame("Documentation Crawler Data (BETA)");
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int height = screenSize.height;
         int width = screenSize.width;
@@ -133,13 +153,6 @@ public class CrawlerController {
         frame.setMinimumSize(new Dimension(500,480));
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        frame.addWindowListener(new WindowAdapter()
-        {
-            public void windowClosing(WindowEvent e) {
-                driver.close();
-            }
-        });
 
         data.chooseSaveDirectoryTextField.setUI(new JTextFieldHintUI("Choose Save Directory", Color.gray));
 
@@ -250,7 +263,8 @@ public class CrawlerController {
                 //set data
                 baseUrl = data.urlInput.getText();
                 username = data.usernameInput.getText();
-                password = data.passwordInput.getText();
+                password = String.valueOf(data.passwordInput.getPassword());
+                //password = data.passwordInput.getText();
                 tenant = data.tenantInput.getText();
                 saveDirectory = data.chooseSaveDirectoryTextField.getText();
                 fileBasedLinks = data.fileReferenceYes.isSelected();
@@ -336,7 +350,7 @@ public class CrawlerController {
     private static void createAndShowProgressGUI(CrawlerProgressData data) throws IOException {
 
         //Create and set up the window.
-        progressFrame = new JFrame("Documentation Crawler Progression");
+        progressFrame = new JFrame("Documentation Crawler Progression (BETA)");
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int height = screenSize.height;
         int width = screenSize.width;
@@ -346,11 +360,17 @@ public class CrawlerController {
         progressFrame.setLocationRelativeTo(null);
         progressFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+
         progressFrame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                driver.close();
+                try {
+                    interrupted = true;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             }
         });
+
 
         //set progress data
         data.workflowProgress.setValue(0);
@@ -366,9 +386,27 @@ public class CrawlerController {
         data.scriptProgress.setString("Not started yet");
         data.scriptProgress.setStringPainted(true);
 
-        data.processes.setEnabledAt(1, false);  //custom params
-        data.processes.setEnabledAt(2, false);  //custom fields
-        data.processes.setEnabledAt(3, false);  //scripts
+        //remove highlight on tab selection
+        data.processes.setFocusable(false);
+
+        //loading image
+        ImageIcon image = new ImageIcon(System.getProperty("user.dir") + "\\src\\main\\resources\\images\\catLoading2.gif");
+
+        data.workflowProgressPanel.setVisible(false);
+        data.workflowLoadingPanel.setVisible(true);
+        data.workflowLoadingImage.add(new JLabel(image,JLabel.CENTER));
+
+        data.customParamProgressPanel.setVisible(false);
+        data.customParamLoadingPanel.setVisible(true);
+        data.customParamLoadingImage.add(new JLabel(image,JLabel.CENTER));
+
+        data.customFieldProgressPanel.setVisible(false);
+        data.customFieldLoadingPanel.setVisible(true);
+        data.customFieldLoadingImage.add(new JLabel(image,JLabel.CENTER));
+
+        data.scriptProgressPanel.setVisible(false);
+        data.scriptLoadingPanel.setVisible(true);
+        data.scriptLoadingImage.add(new JLabel(image,JLabel.CENTER));
 
         progressFrame.add(data.crawlerProgress);
         progressFrame.setVisible(true);
@@ -377,12 +415,14 @@ public class CrawlerController {
 
     public static void main (String args[]){
 
+        /*
         //close previous instances
         try {
             Process p = Runtime.getRuntime().exec("cmd.exe /c Start /b " + System.getProperty("user.dir") + "/src/main/resources/driver/killChromeDriver.bat");
         } catch (Exception e) {
             e.printStackTrace();
         }
+        */
 
         //Schedule a job for the event dispatch thread:
         //creating and showing this application's GUI.
@@ -392,6 +432,7 @@ public class CrawlerController {
                 UIManager.put("swing.boldMetal", Boolean.FALSE);
                 try {
                     createAndShowGUI();
+                     //createAndShowProgressGUI(new CrawlerProgressData());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -432,60 +473,306 @@ public class CrawlerController {
         //FileUtils.forceMkdir(new File(System.getProperty("user.dir")+ "\\documentation\\scripts"));
         FileUtils.forceMkdir(new File(saveDirectory + "\\Onboarding Documentation\\scripts"));
 
-        try {
+        workflowCrawler = new WorkflowCrawler();
+        customParamCrawler = new CustomParamCrawler();
+        customFieldCrawler = new CustomFieldCrawler();
+        scriptCrawler = new ScriptCrawler();
 
-            driver = new ChromeWebDriver().setupDriver();
+        try {
+            ExecutorService es = Executors.newCachedThreadPool();
 
             //crawl workflows
-            WorkflowCrawler workflowCrawler = new WorkflowCrawler();
-            workflowCrawler.startWorkflowCrawling(progressData);
+            es.execute(new Runnable() {
+                public void run() {
+                    try {
+                        workflowCrawler.startWorkflowCrawling(progressData);
+                    }catch(InterruptedException ie){
 
-            //crawl custom params
-            CustomParamCrawler customParamCrawler = new CustomParamCrawler();
-            customParamCrawler.startCustomParamCrawling(progressData);
+                        Highlighter highlighter = progressData.workflowList.getHighlighter();
+                        Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+                        int currentIndex = progressData.workflowList.getText().length();
+
+                        String errorMessage = "There was an error in another tab. Overall process will stop.";
+
+                        //set error message
+                        progressData.workflowList.append(errorMessage);
+
+                        try {
+                            highlighter.addHighlight(currentIndex,currentIndex + errorMessage.length(), painter);
+                        } catch (BadLocationException e) {
+                            e.printStackTrace();
+                        }
+
+                        //hide loading, show progress list since this is where the error will be
+                        progressData.workflowLoadingPanel.setVisible(false);
+                        progressData.workflowProgressPanel.setVisible(true);
+                    }catch (Exception e1) {
+                        //set interrupted true
+                        interrupted = true;
+
+                        //highlight errored tab
+                        progressData.processes.setBackgroundAt(progressData.processes.indexOfComponent(progressData.workflowData),Color.RED);
+
+                        Highlighter highlighter = progressData.workflowList.getHighlighter();
+                        Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+                        int currentIndex = progressData.workflowList.getText().length();
+
+                        //set error message
+                        progressData.workflowList.append(e1.getMessage());
+
+                        try {
+                            highlighter.addHighlight(currentIndex,currentIndex + e1.getMessage().length(), painter);
+                        } catch (BadLocationException e) {
+                            e.printStackTrace();
+                        }
+
+                        //hide loading, show progress list since this is where the error will be
+                        progressData.workflowLoadingPanel.setVisible(false);
+                        progressData.workflowProgressPanel.setVisible(true);
+                    }
+                }
+            });
 
             //crawl custom fields
-            CustomFieldCrawler customFieldCrawler = new CustomFieldCrawler();
-            customFieldCrawler.startCustomFieldCrawling(progressData);
+            es.execute(new Runnable() {
+                public void run() {
+                    try {
+                        customFieldCrawler.startCustomFieldCrawling(progressData);
+                    }catch(InterruptedException ie){
+                        //highlight errored tab
+                        progressData.processes.setBackgroundAt(progressData.processes.indexOfComponent(progressData.customFieldData),Color.RED);
+
+                        Highlighter highlighter = progressData.customFieldList.getHighlighter();
+                        Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+                        int currentIndex = progressData.customFieldList.getText().length();
+
+                        String errorMessage = "There was an error in another tab. Overall process will stop.";
+
+                        //set error message
+                        progressData.customFieldList.append(errorMessage);
+
+                        try {
+                            highlighter.addHighlight(currentIndex,currentIndex + errorMessage.length(), painter);
+                        } catch (BadLocationException e) {
+                            e.printStackTrace();
+                        }
+
+                        //hide loading, show progress list since this is where the error will be
+                        progressData.customFieldLoadingPanel.setVisible(false);
+                        progressData.customFieldProgressPanel.setVisible(true);
+                    }catch (Exception e1) {
+                        //set interrupted true
+                        interrupted = true;
+
+                        //highlight errored tab
+                        progressData.processes.setBackgroundAt(progressData.processes.indexOfComponent(progressData.customFieldData),Color.RED);
+
+                        Highlighter highlighter = progressData.customFieldList.getHighlighter();
+                        Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+                        int currentIndex = progressData.customFieldList.getText().length();
+
+                        //set error message
+                        progressData.customFieldList.append(e1.getMessage());
+
+                        try {
+                            highlighter.addHighlight(currentIndex,currentIndex + e1.getMessage().length(), painter);
+                        } catch (BadLocationException e) {
+                            e.printStackTrace();
+                        }
+
+                        //hide loading, show progress list since this is where the error will be
+                        progressData.customFieldLoadingPanel.setVisible(false);
+                        progressData.customFieldProgressPanel.setVisible(true);
+                    }
+                }
+            });
 
             //crawl scripts
-            ScriptCrawler scriptCrawler = new ScriptCrawler();
-            scriptCrawler.startScriptCrawling(progressData);
+            es.execute(new Runnable() {
+                public void run() {
+                    try {
+                        scriptCrawler.startScriptCrawling(progressData);
+                    }catch(InterruptedException ie){
 
-            driver.close();
+                        //highlight errored tab
+                        progressData.processes.setBackgroundAt(progressData.processes.indexOfComponent(progressData.scriptData),Color.RED);
+
+                        Highlighter highlighter = progressData.scriptList.getHighlighter();
+                        Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+                        int currentIndex = progressData.scriptList.getText().length();
+
+                        String errorMessage = "There was an error in another tab. Overall process will stop.";
+
+                        //set error message
+                        progressData.scriptList.append(errorMessage);
+
+                        try {
+                            highlighter.addHighlight(currentIndex,currentIndex + errorMessage.length(), painter);
+                        } catch (BadLocationException e) {
+                            e.printStackTrace();
+                        }
+
+                        //hide loading, show progress list since this is where the error will be
+                        progressData.scriptLoadingPanel.setVisible(false);
+                        progressData.scriptProgressPanel.setVisible(true);
+                    }catch (Exception e1) {
+                        //set interrupted true
+                        interrupted = true;
+
+                        //highlight errored tab
+                        progressData.processes.setBackgroundAt(progressData.processes.indexOfComponent(progressData.scriptData),Color.RED);
+
+                        Highlighter highlighter = progressData.scriptList.getHighlighter();
+                        Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+                        int currentIndex = progressData.scriptList.getText().length();
+
+                        //set error message
+                        progressData.scriptList.append(e1.getMessage());
+
+                        try {
+                            highlighter.addHighlight(currentIndex,currentIndex + e1.getMessage().length(), painter);
+                        } catch (BadLocationException e) {
+                            e.printStackTrace();
+                        }
+
+                        //hide loading, show progress list since this is where the error will be
+                        progressData.scriptLoadingPanel.setVisible(false);
+                        progressData.scriptProgressPanel.setVisible(true);
+                    }
+                }
+            });
+
+            //crawl custom params
+            es.execute(new Runnable() {
+                public void run() {
+                    try {
+                        customParamCrawler.startCustomParamCrawling(progressData);
+                    }catch(InterruptedException ie){
+
+                        //highlight errored tab
+                        progressData.processes.setBackgroundAt(progressData.processes.indexOfComponent(progressData.customParamData),Color.RED);
+
+                        Highlighter highlighter = progressData.customParamList.getHighlighter();
+                        Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+                        int currentIndex = progressData.customParamList.getText().length();
+
+                        String errorMessage = "There was an error in another tab. Overall process will stop.";
+
+                        //set error message
+                        progressData.customParamList.append(errorMessage);
+
+                        try {
+                            highlighter.addHighlight(currentIndex,currentIndex + errorMessage.length(), painter);
+                        } catch (BadLocationException e) {
+                            e.printStackTrace();
+                        }
+
+                        //hide loading, show progress list since this is where the error will be
+                        progressData.customParamLoadingPanel.setVisible(false);
+                        progressData.customParamProgressPanel.setVisible(true);
+                    }catch (Exception e1) {
+                        //set interrupted true
+                        interrupted = true;
+
+                        //highlight errored tab
+                        progressData.processes.setBackgroundAt(progressData.processes.indexOfComponent(progressData.customParamData),Color.RED);
+
+                        Highlighter highlighter = progressData.customParamList.getHighlighter();
+                        Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+                        int currentIndex = progressData.customParamList.getText().length();
+
+                        //set error message
+                        progressData.customParamList.append(e1.getMessage());
+
+                        try {
+                            highlighter.addHighlight(currentIndex,currentIndex + e1.getMessage().length(), painter);
+                        } catch (BadLocationException e) {
+                            e.printStackTrace();
+                        }
+
+                        //hide loading, show progress list since this is where the error will be
+                        progressData.customParamLoadingPanel.setVisible(false);
+                        progressData.customParamProgressPanel.setVisible(true);
+                    }
+                }
+            });
+
+            es.shutdown();
+            boolean finished = es.awaitTermination(30, TimeUnit.MINUTES);
+
+            if(finished && !interrupted){
+                //successfully crawled designated url
+                //save settings to file
+                PrintWriter writeText = new PrintWriter(System.getProperty("user.dir") + "\\src\\main\\resources\\settings\\settings.txt","UTF-8");
+                writeText.println("baseUrl=" + baseUrl);
+                writeText.println("username=" + username);
+                writeText.println("password=" + password);
+                writeText.println("tenant=" + tenant);
+                writeText.println("saveDirectory=" + saveDirectory);
+                writeText.println("fileBasedLinks=" + String.valueOf(fileBasedLinks));
+                writeText.println("usedInClickHelp=" + String.valueOf(usedInClickHelp));
+                writeText.println("articleBaseUrl=" + articleBaseUrl);
+                writeText.println("imgBaseUrl=" + imgBaseUrl);
+                //writeText.println("replaceSpacesInUrlsWith=" + replaceSpacesInUrlsWith);
+                writeText.close();
+
+                //fill out custom field data
+                for(Map.Entry<String, CustomField> cfMap : customFieldNames.entrySet()){
+                    CustomField cf = cfMap.getValue();
+                    HashMap<String, Workflow> wfList = new HashMap<>(cf.getUsedInWorkflow());
+                    //go through workflows
+                    for(Map.Entry<String, Workflow> wfMap : wfList.entrySet()){
+                        //check if workflow exists
+                        if(workflowNames.containsKey(wfMap.getKey())){
+                            //get workflow
+                            Workflow wf = workflowNames.get(wfMap.getKey());
+
+                            //add to custom field workflows list
+                            cf.addUsedInWorkflow(wfMap.getKey(),wf);
+
+                            //add to workflow custom field list
+                            wf.addUsesCustomFields(cf.getSystemId(),cf);
+                        }else{
+                            //remove from custom field workflow list
+                            cf.removeUsedInWorkflow(wfMap.getKey());
+                        }
+
+
+                    }
+                }
+
+                //fill out workflow script data
+                for(Script script : scripts.values()) {
+                    //go through list of scripts
+                    scriptIterator(script);
+                }
+
+                buildDocumentation();
+            }else{
+                System.out.println("not finished");
+            }
+
         }catch(Exception e1){
+            /*
             //close everything and log errors
             try{
-                driver.close();
+                try {
+                    Process p = Runtime.getRuntime().exec("cmd.exe /c Start /b " + System.getProperty("user.dir") + "/src/main/resources/driver/killChromeDriver.bat");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }catch(Exception e2){
 
             }
+            */
+            //close all drivers
+            closeAllDrivers();
+
             e1.printStackTrace();
-            System.exit(0);
         }
+    }
 
-        //successfully crawled designated url
-        //save settings to file
-        PrintWriter writeText = new PrintWriter(System.getProperty("user.dir") + "\\src\\main\\resources\\settings\\settings.txt","UTF-8");
-        writeText.println("baseUrl=" + baseUrl);
-        writeText.println("username=" + username);
-        writeText.println("password=" + password);
-        writeText.println("tenant=" + tenant);
-        writeText.println("saveDirectory=" + saveDirectory);
-        writeText.println("fileBasedLinks=" + String.valueOf(fileBasedLinks));
-        writeText.println("usedInClickHelp=" + String.valueOf(usedInClickHelp));
-        writeText.println("articleBaseUrl=" + articleBaseUrl);
-        writeText.println("imgBaseUrl=" + imgBaseUrl);
-        //writeText.println("replaceSpacesInUrlsWith=" + replaceSpacesInUrlsWith);
-        writeText.close();
-
-        //fill out workflow script data
-        for(Workflow workflow : workflowNames.values()){
-            Map<String,Script> usesScripts = new HashMap(workflow.getUsesScripts());
-            //go through list of scripts used by the workflow
-            workflowIterator(workflow, usesScripts);
-        }
-
+    private static void buildDocumentation() throws IOException {
         // 1. Configure FreeMarker
         //
         // You should do this ONLY ONCE, when your application starts,
@@ -494,7 +781,8 @@ public class CrawlerController {
         Configuration cfg = new Configuration();
 
         // Where do we load the templates from:
-        cfg.setClassForTemplateLoading(CrawlerController.class, "/templates");
+        cfg.setDirectoryForTemplateLoading(new File(System.getProperty("user.dir") + "/src/main/resources/templates"));
+        //cfg.setClassForTemplateLoading(CrawlerController.class, "/templates");
 
         // Some other recommended settings:
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
@@ -642,8 +930,6 @@ public class CrawlerController {
 
             CustomParam cp = cpMap.getValue();
 
-            System.out.println(cp.getName() + " : " + cp.getUsedInWorkflows());
-
             if(!StringUtils.isEmpty(cp.getName())){
                 Map<String, Object> cpInput = new HashMap<String, Object>();
 
@@ -688,6 +974,7 @@ public class CrawlerController {
                 cfInput.put("label",cf.getLabel());
                 cfInput.put("usedByScripts",cf.getUsedByScripts());
                 cfInput.put("actionUsages",cf.getActionUsages());
+                cfInput.put("usedInWorkflow",cf.getUsedInWorkflow());
 
                 cfInput.put("fileBasedLinks",fileBasedLinks);
                 cfInput.put("articleBaseUrl",articleBaseUrl);
@@ -714,8 +1001,6 @@ public class CrawlerController {
 
             Script script = scriptMap.getValue();
 
-            System.out.println(script.getName());
-
             Map<String, Object> scriptInput = new HashMap<String, Object>();
 
             scriptInput.put("name", script.getName());
@@ -725,6 +1010,7 @@ public class CrawlerController {
             scriptInput.put("allScripts",scripts);
             scriptInput.put("usesScripts",script.getUsesScripts());
             scriptInput.put("usedByScripts",script.getUsedByScripts());
+            scriptInput.put("usedInWorkflowName",script.getUsedInWorkflowName());
             scriptInput.put("usesCustomFields",script.getUsesCustomFields());
             scriptInput.put("actionUsages",script.getActionUsages());
             scriptInput.put("usesCustomParams",script.getUsesCustomParams());
@@ -732,13 +1018,13 @@ public class CrawlerController {
             //format code for clickhelp
             if(script.getCode() != null && !fileBasedLinks && usedInClickHelp){
                 scriptInput.put("code", script.getCode()
-                        .replaceAll("&","&amp;")
-                        .replaceAll("©","&copy;")
-                        .replaceAll("\t","&#9;")
-                        .replaceAll(">","&gt;")
-                        .replaceAll("<","&lt;")
-                        .replaceAll("\"","&quot;")
-                        .replaceAll("\\$","&dollar;")
+                                .replaceAll("&","&amp;")
+                                .replaceAll("©","&copy;")
+                                .replaceAll("\t","&#9;")
+                                .replaceAll(">","&gt;")
+                                .replaceAll("<","&lt;")
+                                .replaceAll("\"","&quot;")
+                                .replaceAll("\\$","&dollar;")
                         //.replaceAll("&dollar;\n&dollar;","")
                 );
             }else{
@@ -768,40 +1054,88 @@ public class CrawlerController {
         System.exit(0);
     }
 
-    private static void setupDriver(){
+    private static void scriptIterator(Script script){
 
+        //list of everything
+        HashMap<String, Workflow> tempWorkflowNames = new HashMap<>(script.getUsedInWorkflowName());
+        HashMap<String, Workflow> tempWorkflowSysIds = new HashMap<>(script.getUsedInWorkflowSysId());
+        HashMap<String, CustomParam> tempCustomParams = new HashMap<>(script.getUsesCustomParams());
+        HashMap<String, CustomField> tempCustomFields = new HashMap<>(script.getUsesCustomFields());
 
+        //add workflows
+        for(Map.Entry<String, Workflow> tempWorkflow : tempWorkflowNames.entrySet()){
+            //check if the workflow name is used
+            if(workflowNames.containsKey(tempWorkflow.getKey())){
+                //add to two lists
+                script.addUsedInWorkflowName(workflowNames.get(tempWorkflow.getKey()).getName(),workflowNames.get(tempWorkflow.getKey()));
+                script.addUsedInWorkflowSysId(workflowNames.get(tempWorkflow.getKey()).getSystemId(),workflowNames.get(tempWorkflow.getKey()));
 
-    }
-
-    private static void workflowIterator(Workflow workflow, Map<String, Script> scripts){
-
-        for(Map.Entry<String,Script> script : scripts.entrySet()){
-            //add script to workflow
-            workflow.addUsedScripts(script.getKey(),script.getValue());
-
-            //get custom params
-            for(Map.Entry<String, CustomParam> cp : script.getValue().getUsesCustomParams().entrySet()){
-                //add custom field to workflow
-                workflow.addUsesCustomParams(cp.getKey(),cp.getValue());
-
-                //add workflow usage to custom fields
-                cp.getValue().setUsedInWorkflows(workflow.getSystemId(),workflow);
+                //add to workflow
+                workflowNames.get(tempWorkflow.getKey()).addUsedScripts(script.getSystemId(),script);
+            }else{
+                script.removeUsedInWorkflowName(tempWorkflow.getKey());
             }
-
-            //get custom fields
-            for(Map.Entry<String, CustomField> cf : script.getValue().getUsesCustomFields().entrySet()){
-                //add custom field to workflow
-                workflow.addUsesCustomFields(cf.getKey(),cf.getValue());
-
-                //add workflow usage to custom fields
-                cf.getValue().setUsedInWorkflow(workflow.getSystemId(),workflow);
+        }
+        for(Map.Entry<String, Workflow> tempWorkflow : tempWorkflowSysIds.entrySet()){
+            if(workflowSystemIds.containsKey(tempWorkflow.getKey())){
+                //add to two lists
+                script.addUsedInWorkflowName(workflowSystemIds.get(tempWorkflow.getKey()).getName(),workflowSystemIds.get(tempWorkflow.getKey()));
+                script.addUsedInWorkflowSysId(workflowSystemIds.get(tempWorkflow.getKey()).getSystemId(),workflowSystemIds.get(tempWorkflow.getKey()));
+            }else{
+                script.removeUsedInWorkflowSysId(tempWorkflow.getKey());
             }
+        }
 
-            if(!script.getValue().usesScripts.isEmpty()){
-                workflowIterator(workflow,script.getValue().usesScripts);
+        //update temp workflows
+        tempWorkflowNames = new HashMap<>(script.getUsedInWorkflowName());
+        tempWorkflowSysIds = new HashMap<>(script.getUsedInWorkflowSysId());
+
+        //add custom params
+        for(Map.Entry<String, CustomParam> tempCustomParam : tempCustomParams.entrySet()){
+            if(customParams.containsKey(tempCustomParam.getKey())){
+                //add to script
+                script.addUsesCustomParams(customParams.get(tempCustomParam.getKey()).getName(),customParams.get(tempCustomParam.getKey()));
+
+                //add to custom param
+                customParams.get(tempCustomParam.getKey()).addUsedByScripts(script.getSystemId(),script);
+
+                //add custom params to workflows and vice versa
+                for(Map.Entry<String, Workflow> tempWorkflow : tempWorkflowSysIds.entrySet()){
+                    String wfSysId = tempWorkflow.getKey();
+                    if(workflowSystemIds.containsKey(tempWorkflow.getKey())){
+
+                        Workflow wf = workflowSystemIds.get(tempWorkflow.getKey());
+                        wf.addUsesCustomParams(tempCustomParam.getKey(),customParams.get(tempCustomParam.getKey()));
+                        customParams.get(tempCustomParam.getKey()).setUsedInWorkflows(wfSysId,wf);
+                    }
+                }
+            }else{
+                script.removeUsesCustomParams(tempCustomParam.getKey());
             }
+        }
 
+        //add custom fields
+        for(Map.Entry<String, CustomField> tempCustomField : tempCustomFields.entrySet()){
+
+            if(customFieldSystemIds.containsKey(tempCustomField.getKey())){
+                //add to script
+                script.addUsesCustomFields(customFieldSystemIds.get(tempCustomField.getKey()).getSystemId(),customFieldSystemIds.get(tempCustomField.getKey()));
+
+                //add to custom field
+                customFieldSystemIds.get(tempCustomField.getKey()).addUsedByScripts(script.getSystemId(),script);
+
+                //add custom params to workflows and vice versa
+                for(Map.Entry<String, Workflow> tempWorkflow : tempWorkflowNames.entrySet()){
+                    String wfName = tempWorkflow.getKey();
+                    if(workflowNames.containsKey(tempWorkflow.getKey())){
+                        Workflow wf = workflowNames.get(tempWorkflow.getKey());
+                        wf.addUsesCustomFields(tempCustomField.getKey(),customFieldSystemIds.get(tempCustomField.getKey()));
+                        customFieldSystemIds.get(tempCustomField.getKey()).addUsedInWorkflow(wfName,wf);
+                    }
+                }
+            }else{
+                script.removeUsesCustomFields(tempCustomField.getKey());
+            }
         }
     }
 
@@ -915,6 +1249,32 @@ public class CrawlerController {
         public void uninstallListeners() {
             super.uninstallListeners();
             getComponent().removeFocusListener(this);
+        }
+    }
+
+    private static void closeAllDrivers(){
+        try{
+            workflowCrawler.driver.close();
+        }catch(Exception exception){
+
+        }
+
+        try{
+            customParamCrawler.driver.close();
+        }catch(Exception exception){
+
+        }
+
+        try{
+            customFieldCrawler.driver.close();
+        }catch(Exception exception){
+
+        }
+
+        try{
+            scriptCrawler.driver.close();
+        }catch(Exception exception){
+
         }
     }
 }

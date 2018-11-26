@@ -6,9 +6,9 @@ public class Workflow {
     private String name;
     private String systemId;
     private String description;
-    private Map<String, Script> usesScripts = new HashMap<>();   //systemid, script
-    private Map<String, CustomField> usesCustomFieldsSysId  = new HashMap<>();   //name, cf
-    private Map<String, CustomParam> usesCustomParams  = new HashMap<>();   //name, cp
+    private HashMap<String, Script> usesScripts = new HashMap<>();   //systemid, script
+    private HashMap<String, CustomField> usesCustomFieldsSysId  = new HashMap<>();   //name, cf
+    private HashMap<String, CustomParam> usesCustomParams  = new HashMap<>();   //name, cp
 
     public Workflow(){
 
@@ -30,15 +30,15 @@ public class Workflow {
         return this.description;
     }
 
-    public Map<String, Script> getUsesScripts(){
+    public HashMap<String, Script> getUsesScripts(){
         return this.usesScripts;
     }
 
-    public Map<String, CustomField> getUsesCustomFields(){
+    public HashMap<String, CustomField> getUsesCustomFields(){
         return this.usesCustomFieldsSysId;
     }
 
-    public Map<String, CustomParam> getUsesCustomParams(){
+    public HashMap<String, CustomParam> getUsesCustomParams(){
         return this.usesCustomParams;
     }
 
@@ -68,6 +68,18 @@ public class Workflow {
 
     public void addUsesCustomParams(String systemId, CustomParam customParam){
         this.usesCustomParams.put(systemId,customParam);
+    }
+
+    public void removeUsedScripts(String systemId){
+        this.usesScripts.remove(systemId);
+    }
+
+    public void removeUsesCustomFields(String systemId){
+        this.usesCustomFieldsSysId.remove(systemId);
+    }
+
+    public void removeUsesCustomParams(String systemId){
+        this.usesCustomParams.remove(systemId);
     }
 
 }

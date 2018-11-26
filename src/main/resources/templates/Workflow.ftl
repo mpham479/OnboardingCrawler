@@ -273,7 +273,7 @@
 					<tr class='${["scriptOdd", "scriptEven"][uses_index%2]}'>
 		  				<td class="default">
 		  					<#if fileBasedLinks>
-		  						<a href="file:${uses.name}.html">${uses.name}</a>
+		  						<a href="file:../customparams/${uses.name}.html">${uses.name}</a>
 		  					<#else>
 		  						<a href="${articleBaseUrl + uses.name?replace('_',replaceSpacesInUrlsWith,'r')}">${uses.name}</a>
 		  					</#if>

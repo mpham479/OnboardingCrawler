@@ -16,38 +16,33 @@ import java.util.Map;
 @SuppressWarnings("Duplicates")
 public class CustomFieldCrawler {
 
-    private static CrawlerProgressData data;
+    public static CrawlerProgressData data;
+    public static WebDriver driver;
 
     public CustomFieldCrawler(){
 
     }
 
-    public static void startCustomFieldCrawling(CrawlerProgressData progressData){
+    public static void startCustomFieldCrawling(CrawlerProgressData progressData) throws InterruptedException {
 
-        //bring to front
-        CrawlerController.progressFrame.toFront();
+        checkInterrupted();
 
         //initialize data
         data = progressData;
 
-        System.out.println("Starting Custom Field Crawling");
-        System.out.println();
-
-        //set tab
-        data.processes.setEnabledAt(2,true);
-        data.processes.setSelectedComponent(data.customFieldData);
-
         //create new webdriver instance
-        WebDriver driver = CrawlerController.driver;
+        driver = new ChromeWebDriver().setupDriver();
 
         //go to url
         driver.get(CrawlerController.baseUrl + "showCustomFields.do?method=prepare&tenantName=" + CrawlerController.tenant);
 
         //wait until script custom fields table is created
-        new WebDriverWait(driver,20).until(ExpectedConditions.presenceOfElementLocated(By.id("customField")));
+        //new WebDriverWait(driver,100).until(ExpectedConditions.presenceOfElementLocated(By.id("customField")));
 
         //wait until page banner is created
-        new WebDriverWait(driver,20).until(ExpectedConditions.presenceOfElementLocated(By.className("pagebanner")));
+        //new WebDriverWait(driver,100).until(ExpectedConditions.presenceOfElementLocated(By.className("pagebanner")));
+
+        new WebDriverWait(driver,100).until(ExpectedConditions.jsReturnsValue("return document.getElementsByClassName('pagebanner')[0].innerText.substring(0,document.getElementsByClassName('pagebanner')[0].innerText.indexOf(' items found'))"));
 
         //check if all javascript has finished
         if(driver instanceof JavascriptExecutor){
@@ -82,7 +77,7 @@ public class CustomFieldCrawler {
 
     }
 
-    private static void parseCustomFields(String htmlToBeParsed) {
+    private static void parseCustomFields(String htmlToBeParsed) throws InterruptedException {
 
         //get document
         Document doc = Jsoup.parse(htmlToBeParsed);
@@ -92,6 +87,10 @@ public class CustomFieldCrawler {
 
         //get rows
         Elements rows = cfTable.getElementsByTag("tbody").get(0).getElementsByTag("tr");
+
+        //got data, now display progress bar
+        data.customFieldLoadingPanel.setVisible(false);
+        data.customFieldProgressPanel.setVisible(true);
 
         //specify percentage
         data.customFieldProgress.setString("0% Starting...");
@@ -106,6 +105,10 @@ public class CustomFieldCrawler {
 
         //iterate through rows
         for(Element row : rows){
+
+            //check if interrupted
+            checkInterrupted();
+
             //iterate counter
             counter++;
 
@@ -136,27 +139,27 @@ public class CustomFieldCrawler {
 
             if(currentCalculatedPercentage > currentPercentageRounded){
                 while(currentCalculatedPercentage > currentPercentageRounded){
-                    sb.append("|");
                     currentPercentageRounded += 1;
                 }
             }
-            if(counter == rows.size()){
-                //account for completion
-                format = "\r[%-100s]%d%%\t\t|\t(%d/%d) done!\n\n";
-            }
-            System.out.print(String.format(format,sb,currentPercentageRounded,(int)counter,rows.size(),name));
+            //System.out.print(String.format(format,sb,currentPercentageRounded,(int)counter,rows.size(),name));
 
             //set progress bar
             data.customFieldProgress.setValue(currentPercentageRounded);
             data.customFieldProgress.setString(String.format("%d%% (%d/%d)",currentPercentageRounded,(int)counter, rows.size()));
             data.customFieldList.append(name + "\n");
             data.customFieldScroll.getViewport().setViewPosition(new Point(0,data.customFieldList.getDocument().getLength()));
+
         }
+
+        //color tab to signify finished
+        data.processes.setBackgroundAt(data.processes.indexOfComponent(data.customFieldData),Color.GREEN);
+
+        //close driver
+        driver.close();
     }
 
     private static void getCustomFieldActionUsages(CustomField customField, String page){
-        //create new webdriver instance
-        WebDriver driver = CrawlerController.driver;
 
         String id = customField.getId();
 
@@ -229,6 +232,7 @@ public class CustomFieldCrawler {
                 //add to custom field
                 customField.addActionUsage(map);
 
+                /*
                 //add to workflow usages
                 try {
                     String workflowName = map.get("Workflow");
@@ -236,6 +240,11 @@ public class CustomFieldCrawler {
                 } catch (NullPointerException e) {
                     System.out.println("No workflow associated with: " + map + " for custom field: " + customField.getName());
                 }
+                */
+                //add workflow to custom field
+                String workflowName = map.get("Workflow");
+                Workflow tempWorkflow = new Workflow();
+                customField.addUsedInWorkflow(workflowName,tempWorkflow);
             }
         }
         //skip this if pages have already been found
@@ -267,8 +276,6 @@ public class CustomFieldCrawler {
     }
 
     private static String waitForElement(String elementName){
-        //create new webdriver instance
-        WebDriver driver = CrawlerController.driver;
 
         int counter = 0;
         int max = 30;
@@ -296,8 +303,6 @@ public class CustomFieldCrawler {
     }
 
     private static String waitForElementNoEquals(String elementName, String diffString){
-        //create new webdriver instance
-        WebDriver driver = CrawlerController.driver;
 
         int counter = 0;
         int max = 20;
@@ -335,6 +340,20 @@ public class CustomFieldCrawler {
             }else{
                 return string;
             }
+        }
+    }
+
+    private static void checkInterrupted() throws InterruptedException {
+        if(CrawlerController.interrupted){
+            try{
+                //close driver
+                driver.close();
+            }catch(Exception e){
+
+            }
+
+            //throw exception for thread
+            throw new InterruptedException("Interrupted");
         }
     }
 }

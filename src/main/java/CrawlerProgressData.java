@@ -19,6 +19,18 @@ public class CrawlerProgressData {
     public JScrollPane customParamScroll;
     public JScrollPane customFieldScroll;
     public JScrollPane scriptScroll;
+    public JPanel workflowLoadingPanel;
+    public JPanel workflowProgressPanel;
+    public JPanel workflowLoadingImage;
+    public JPanel customParamProgressPanel;
+    public JPanel customParamLoadingPanel;
+    public JPanel customParamLoadingImage;
+    public JPanel customFieldProgressPanel;
+    public JPanel customFieldLoadingPanel;
+    public JPanel customFieldLoadingImage;
+    public JPanel scriptProgressPanel;
+    public JPanel scriptLoadingPanel;
+    public JPanel scriptLoadingImage;
 
     public CrawlerProgressData(){
 

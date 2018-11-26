@@ -6,7 +6,7 @@ public class CrawlerGatherData {
     public JTextField usernameInput;
     public JLabel usernameLabel;
     public JLabel passwordLabel;
-    public JTextField passwordInput;
+    public JPasswordField passwordInput;
     public JLabel tenantLabel;
     public JTextField tenantInput;
     public JPanel mainPanel;

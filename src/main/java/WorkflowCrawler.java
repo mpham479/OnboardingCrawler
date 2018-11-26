@@ -4,32 +4,29 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 
 public class WorkflowCrawler {
 
+    public static WebDriver driver;
+
     public WorkflowCrawler(){
 
     }
 
-    public static void startWorkflowCrawling(CrawlerProgressData data) throws InterruptedException {
-
-        //bring to front
-        CrawlerController.progressFrame.toFront();
-
-        System.out.println("Starting Workflow Crawling");
-        System.out.println();
-
+    public static void startWorkflowCrawling(CrawlerProgressData data) throws Exception {
+        checkInterrupted();
         //create new webdriver instance
-        WebDriver driver = CrawlerController.driver;
+        driver = new ChromeWebDriver().setupDriver();
 
         //go to url
         driver.get(CrawlerController.baseUrl + "sp/workflow/list");
 
         //wait until script fancytree is created
         //new WebDriverWait(driver,200).until(ExpectedConditions.presenceOfElementLocated(By.className("tableSection")));
-        new WebDriverWait(driver,200).until(ExpectedConditions.jsReturnsValue("document.getElementsByClassName(\"tableSection\")[0].getElementsByTagName(\"tbody\")[0]" +
+        new WebDriverWait(driver,100).until(ExpectedConditions.jsReturnsValue("document.getElementsByClassName(\"tableSection\")[0].getElementsByTagName(\"tbody\")[0]" +
                 ".scrollTo(0,document.getElementsByClassName(\"tableSection\")[0].getElementsByTagName(\"tbody\")[0].scrollHeight);" +
                 "return document.getElementsByClassName(\"tableSection\")[0].getElementsByTagName(\"tbody\")[0].scrollHeight"));
 
@@ -55,6 +52,10 @@ public class WorkflowCrawler {
                 }
             }
 
+            //got data, now display progress bar
+            data.workflowLoadingPanel.setVisible(false);
+            data.workflowProgressPanel.setVisible(true);
+
             Integer dataRows = Integer.parseInt(((JavascriptExecutor) driver).executeScript("return document.getElementsByClassName(\"data-row\").length").toString());
 
             //specify percentage
@@ -68,6 +69,10 @@ public class WorkflowCrawler {
             int currentPercentageRounded = 0;
 
             for(int i = 0; i < dataRows; i++){
+
+            //check if interrupted
+            checkInterrupted();
+
                 //data variables
                 String name;
                 String description;
@@ -95,17 +100,14 @@ public class WorkflowCrawler {
                 currentCalculatedPercentage = iteration*(i+1);
                 if(currentCalculatedPercentage > (currentPercentageRounded+1)){
                     while(currentCalculatedPercentage > currentPercentageRounded+1){
-                        sb.append("|");
                         currentPercentageRounded += 1;
                     }
                 }
                 if(i == (dataRows-1)){
                     //account for completion
-                    sb.append("|");
                     currentPercentageRounded += 1;
-                    format = "\r[%-100s]%d%% done!\n\n";
                 }
-                System.out.print(String.format(format,sb,currentPercentageRounded,i+1,dataRows,name));
+                //System.out.print(String.format(format,sb,currentPercentageRounded,i+1,dataRows,name));
 
                 //set progress bar
                 data.workflowProgress.setValue(currentPercentageRounded);
@@ -115,5 +117,26 @@ public class WorkflowCrawler {
 
             }
         }
+
+        //color tab to signify finished
+        data.processes.setBackgroundAt(data.processes.indexOfComponent(data.workflowData),Color.GREEN);
+
+        //close driver
+        driver.close();
     }
+
+    private static void checkInterrupted() throws InterruptedException {
+        if(CrawlerController.interrupted){
+            try{
+                //close driver
+                driver.close();
+            }catch(Exception e){
+
+            }
+
+            //throw exception for thread
+            throw new InterruptedException("Interrupted");
+        }
+    }
+
 }

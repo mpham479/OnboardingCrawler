@@ -38,9 +38,9 @@ public class CustomField {
     private String description;
     private String type;
     private String label;
-    private Map<String, Script> usedByScripts = new HashMap<>();   //systemid, script
-    private Map<String, Workflow> usedInWorkflow = new HashMap<>();   //systemid, workflow
-    private Set<Map<String,String>> actionUsages = new HashSet<>();
+    private HashMap<String, Script> usedByScripts = new HashMap<>();   //systemid, script
+    private HashMap<String, Workflow> usedInWorkflow = new HashMap<>();   //name, workflow
+    private HashSet<Map<String,String>> actionUsages = new HashSet<>();
 
     /**
      * Constructor
@@ -73,15 +73,15 @@ public class CustomField {
         return this.label;
     }
 
-    public Map<String, Script> getUsedByScripts(){
+    public HashMap<String, Script> getUsedByScripts(){
         return this.usedByScripts;
     }
 
-    public Set<Map<String,String>> getActionUsages(){
+    public HashSet<Map<String,String>> getActionUsages(){
         return this.actionUsages;
     }
 
-    public Map<String, Workflow> getUsedInWorkflow() {
+    public HashMap<String, Workflow> getUsedInWorkflow() {
         return usedInWorkflow;
     }
 
@@ -117,7 +117,19 @@ public class CustomField {
         this.actionUsages.add(usages);
     }
 
-    public void setUsedInWorkflow(String systemId, Workflow workflow){
-        this.usedInWorkflow.put(systemId,workflow);
+    public void addUsedInWorkflow(String name, Workflow workflow){
+        this.usedInWorkflow.put(name,workflow);
+    }
+
+    public void removeUsedByScripts(String systemId){
+        this.usedByScripts.remove(systemId);
+    }
+
+    public void removeActionUsage(Map<String,String> usages){
+        this.actionUsages.remove(usages);
+    }
+
+    public void removeUsedInWorkflow(String name){
+        this.usedInWorkflow.remove(name);
     }
 }
