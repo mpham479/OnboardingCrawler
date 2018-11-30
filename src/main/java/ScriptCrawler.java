@@ -131,27 +131,35 @@ public class ScriptCrawler {
             testFlag = true;
         }
 
-        //need to go one more
-        Integer folderSize = Integer.parseInt(((JavascriptExecutor) driver).executeScript(root + ".children.length").toString());
+        try {
 
-        for(int x = 0; x < folderSize; x++){
-            String newRoot = root + ".children[" + x + "]";
 
-            //check if draft, those will be ignored
-            if(!"true".equalsIgnoreCase(String.valueOf(((JavascriptExecutor) driver).executeScript(newRoot + ".data.isDraft")))) {
-                //check if folder
-                if ("true".equalsIgnoreCase(String.valueOf(((JavascriptExecutor) driver).executeScript(newRoot + ".folder")))) {
-                    //go through new folder
-                    navigateFolder(newRoot, testFlag, (lastFolder && x == folderSize - 1), changingScriptId);
-                } else {
-                    //get script data
-                    changingScriptId = navigateScripts(newRoot, testFlag, (lastFolder && x == folderSize - 1), changingScriptId);
+            //need to go one more
+            Integer folderSize = Integer.parseInt(((JavascriptExecutor) driver).executeScript(root + ".children.length").toString());
+
+            for (int x = 0; x < folderSize; x++) {
+                String newRoot = root + ".children[" + x + "]";
+
+                //check if draft, those will be ignored
+                if (!"true".equalsIgnoreCase(String.valueOf(((JavascriptExecutor) driver).executeScript(newRoot + ".data.isDraft")))) {
+                    //check if folder
+                    if ("true".equalsIgnoreCase(String.valueOf(((JavascriptExecutor) driver).executeScript(newRoot + ".folder")))) {
+                        //go through new folder
+                        navigateFolder(newRoot, testFlag, (lastFolder && x == folderSize - 1), changingScriptId);
+                    } else {
+                        //get script data
+                        changingScriptId = navigateScripts(newRoot, testFlag, (lastFolder && x == folderSize - 1), changingScriptId);
+                    }
                 }
             }
+
+        }catch(Exception e){
+            System.out.println("Error getting data for folder: " + folderName + ". " + e.getMessage());
         }
 
         //returns last script id
         return changingScriptId;
+
     }
 
     public static String navigateScripts(String root, boolean testFlag, boolean lastScript, String previousScriptId) throws InterruptedException {
@@ -237,7 +245,6 @@ public class ScriptCrawler {
 
         //check if test scripts
         if(!testFlag && !scriptName.toLowerCase().contains("test")){
-
             //get workflows used
             getWorkflowsUsed(scriptSystemId,script);
 
@@ -291,102 +298,125 @@ public class ScriptCrawler {
     public static void getWorkflowsUsed(String scriptSystemId, Script script){
         //check if scheduled task
         if(script.getType().equalsIgnoreCase("Scheduled_Task")){
-            //get name
-            String workflowSysId = script.getName().substring(0,script.getName().indexOf(" ")).replaceAll("/[&\\/\\\\#,+()$~%.'\":*?<>{} _-]/g","");
+            try{
+                //get name
+                String workflowSysId = script.getName().substring(0,script.getName().indexOf(" ")).replaceAll("/[&\\/\\\\#,+()$~%.'\":*?<>{} _-]/g","");
 
-            /*
-            //check if workflow exists
-            for(Map.Entry<String, Workflow> workflow : CrawlerController.workflowSystemIds.entrySet()){
-                if(workflow.getKey().equalsIgnoreCase(workflowSysId)){
-                    //add to script
-                    script.addUsedInWorkflow(workflow.getKey(),workflow.getValue());
+                /*
+                //check if workflow exists
+                for(Map.Entry<String, Workflow> workflow : CrawlerController.workflowSystemIds.entrySet()){
+                    if(workflow.getKey().equalsIgnoreCase(workflowSysId)){
+                        //add to script
+                        script.addUsedInWorkflow(workflow.getKey(),workflow.getValue());
 
-                    //add to workflow
-                    workflow.getValue().addUsedScripts(scriptSystemId,script);
-                    break;
+                        //add to workflow
+                        workflow.getValue().addUsedScripts(scriptSystemId,script);
+                        break;
+                    }
                 }
-            }
-            */
-            //add to script
+                */
+                //add to script
 
-            Workflow workflow = new Workflow();
-            if(!nullCheck(workflowSysId).isEmpty() && !script.getUsedInWorkflowSysId().containsKey(workflowSysId)){
-                workflowSysId = workflowSysId.toLowerCase();
-                workflow.setSystemId(workflowSysId);
-                script.addUsedInWorkflowSysId(workflowSysId,workflow);
+                Workflow workflow = new Workflow();
+                if(!nullCheck(workflowSysId).isEmpty() && !script.getUsedInWorkflowSysId().containsKey(workflowSysId)){
+                    workflowSysId = workflowSysId.toLowerCase();
+                    workflow.setSystemId(workflowSysId);
+                    script.addUsedInWorkflowSysId(workflowSysId,workflow);
+                }
+            }catch(Exception e){
+                System.out.println("Could not get scheduled task to workflow association.");
             }
         }
-
     }
 
     public static void getCustomParamsUsed(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf("resp.getAppParam("); index >= 0; index = scriptCode.indexOf("resp.getAppParam(",index+1)){
-            String usedCustomParamName = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 2,
-                    scriptCode.indexOf(")",index) - 1
-            );
-            //add custom param
-            CustomParam param = new CustomParam();
-            if(!nullCheck(usedCustomParamName).isEmpty() && !script.getUsesCustomParams().containsKey(usedCustomParamName)){
-                param.setName(usedCustomParamName);
-                script.addUsesCustomParams(usedCustomParamName,param);
+            try {
+                String usedCustomParamName = scriptCode.substring(
+                        scriptCode.indexOf("(", index) + 2,
+                        scriptCode.indexOf(")", index) - 1
+                );
+                //add custom param
+                CustomParam param = new CustomParam();
+                if (!nullCheck(usedCustomParamName).isEmpty() && !script.getUsesCustomParams().containsKey(usedCustomParamName)) {
+                    param.setName(usedCustomParamName);
+                    script.addUsesCustomParams(usedCustomParamName, param);
+                }
+                /*
+                //get custom param
+                if(CrawlerController.customParams.containsKey(usedCustomParamName)){
+                    CustomParam cp = CrawlerController.customParams.get(usedCustomParamName);
+
+                    //add to custom param
+                    cp.addUsedByScripts(scriptSystemId,script);
+
+                    //add to script
+                    script.addUsesCustomParams(cp.getName(),cp);
+                };
+                */
+
+            }catch(Exception e){
+                System.out.println("Custom Param " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid custom param.");
             }
-            /*
-            //get custom param
-            if(CrawlerController.customParams.containsKey(usedCustomParamName)){
-                CustomParam cp = CrawlerController.customParams.get(usedCustomParamName);
-
-                //add to custom param
-                cp.addUsedByScripts(scriptSystemId,script);
-
-                //add to script
-                script.addUsesCustomParams(cp.getName(),cp);
-            };
-            */
         }
     }
 
     public static void getUtilScriptsUsed(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf("resp.importScript("); index >= 0; index = scriptCode.indexOf("resp.importScript(",index+1)){
-            String usedScriptSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 2,
-                    scriptCode.indexOf(")",index) - 1
-            );
+            try {
+                String usedScriptSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(", index) + 2,
+                        scriptCode.indexOf(")", index) - 1
+                );
 
-            //save scripts
-            saveScriptUsages(scriptSystemId, usedScriptSystemId, script);
+                //save scripts
+                saveScriptUsages(scriptSystemId, usedScriptSystemId, script);
+
+            }catch(Exception e){
+                System.out.println("Script " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid script.");
+            }
         }
     }
 
     public static void getScriptGetsUsed(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf("resp.script.get("); index >= 0; index = scriptCode.indexOf("resp.script.get(",index+1)){
-            String usedScriptSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 2,
-                    scriptCode.indexOf(")",index) - 1
-            );
+            try {
+                String usedScriptSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(", index) + 2,
+                        scriptCode.indexOf(")", index) - 1
+                );
 
-            //save scripts
-            saveScriptUsages(scriptSystemId, usedScriptSystemId, script);
+                //save scripts
+                saveScriptUsages(scriptSystemId, usedScriptSystemId, script);
+
+            }catch(Exception e){
+                System.out.println("Script " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid script.");
+            }
         }
     }
 
     public static void getScriptExecutesUsed(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf("resp.script.execute("); index >= 0; index = scriptCode.indexOf("resp.script.execute(",index+1)){
-            String usedScriptSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 1,
-                    scriptCode.indexOf(")",index)
-            );
-            if(usedScriptSystemId.contains("'") || usedScriptSystemId.contains("\"")){
-                //save scripts
-                usedScriptSystemId = usedScriptSystemId.substring(1,usedScriptSystemId.length()-1);
-                saveScriptUsages(scriptSystemId, usedScriptSystemId, script);
-            }else{
-                //error here
-                //System.out.println("Not saved: " + usedScriptSystemId);
+            try{
+                String usedScriptSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(",index) + 1,
+                        scriptCode.indexOf(")",index)
+                );
+                if(usedScriptSystemId.contains("'") || usedScriptSystemId.contains("\"")){
+                    //save scripts
+                    usedScriptSystemId = usedScriptSystemId.substring(1,usedScriptSystemId.length()-1);
+                    saveScriptUsages(scriptSystemId, usedScriptSystemId, script);
+                }else{
+                    //error here
+                    //System.out.println("Not saved: " + usedScriptSystemId);
+                }
+
+            }catch(Exception e){
+                System.out.println("Script " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid script.");
             }
         }
     }
@@ -394,237 +424,279 @@ public class ScriptCrawler {
     public static void getAsyncTasksUsed(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf("resp.asyncTask.execute("); index >= 0; index = scriptCode.indexOf("resp.asyncTask.execute(",index+1)){
-            String usedScriptSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index) + 2,
-                    scriptCode.indexOf(",",index) - 1
-            );
+            try{
+                String usedScriptSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(",index) + 2,
+                        scriptCode.indexOf(",",index) - 1
+                );
 
-            //save scripts
-            saveScriptUsages(scriptSystemId, usedScriptSystemId, script);
+                //save scripts
+                saveScriptUsages(scriptSystemId, usedScriptSystemId, script);
+
+            }catch(Exception e){
+                System.out.println("Field " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid script.");
+            }
         }
     }
 
     public static void getFormGetValue(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf("form.getValue("); index >= 0; index = scriptCode.indexOf("form.getValue(",index+1)){
-            String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index)+2,
-                    scriptCode.indexOf(")",index)-1
-            );
+            try{
+                String customFieldSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(",index)+2,
+                        scriptCode.indexOf(")",index)-1
+                );
 
-            //add custom field
-            CustomField cf = new CustomField();
-            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
-                cf.setSystemId(customFieldSystemId);
-                script.addUsesCustomFields(customFieldSystemId,cf);
-            }
+                //add custom field
+                CustomField cf = new CustomField();
+                if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                    cf.setSystemId(customFieldSystemId);
+                    script.addUsesCustomFields(customFieldSystemId,cf);
+                }
 
-            /*
-            if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
-                //save scripts
-                customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
-                saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
-            }else{
-                //error here
-                //System.out.println("Not saved: " + customFieldSystemId);
+                /*
+                if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
+                    //save scripts
+                    customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
+                    saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
+                }else{
+                    //error here
+                    //System.out.println("Not saved: " + customFieldSystemId);
+                }
+                */
+
+            }catch(Exception e){
+                System.out.println("Field " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid field.");
             }
-            */
         }
     }
 
     public static void getFormRefreshElement(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf("form.refreshElement("); index >= 0; index = scriptCode.indexOf("form.refreshElement(",index+1)){
-            String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index)+2,
-                    scriptCode.indexOf(")",index)-1
-            );
+            try{
+                String customFieldSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(",index)+2,
+                        scriptCode.indexOf(")",index)-1
+                );
 
-            //add custom field
-            CustomField cf = new CustomField();
-            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
-                cf.setSystemId(customFieldSystemId);
-                script.addUsesCustomFields(customFieldSystemId,cf);
-            }
+                //add custom field
+                CustomField cf = new CustomField();
+                if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                    cf.setSystemId(customFieldSystemId);
+                    script.addUsesCustomFields(customFieldSystemId,cf);
+                }
 
-            /*
-            if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
-                //save scripts
-                customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
-                saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
-            }else{
-                //error here
-                //System.out.println("Not saved: " + customFieldSystemId);
+                /*
+                if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
+                    //save scripts
+                    customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
+                    saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
+                }else{
+                    //error here
+                    //System.out.println("Not saved: " + customFieldSystemId);
+                }
+                */
+
+            }catch(Exception e){
+                System.out.println("Field " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid field.");
             }
-            */
         }
     }
 
     public static void getFormGetTableController(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf("form.getTableController("); index >= 0; index = scriptCode.indexOf("form.getTableController(",index+1)){
-            String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index)+2,
-                    scriptCode.indexOf(")",index) - 1
-            );
+            try{
+                String customFieldSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(",index)+2,
+                        scriptCode.indexOf(")",index) - 1
+                );
 
-            //add custom field
-            CustomField cf = new CustomField();
-            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
-                cf.setSystemId(customFieldSystemId);
-                script.addUsesCustomFields(customFieldSystemId,cf);
-            }
+                //add custom field
+                CustomField cf = new CustomField();
+                if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                    cf.setSystemId(customFieldSystemId);
+                    script.addUsesCustomFields(customFieldSystemId,cf);
+                }
 
-            /*
-            if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
-                //save scripts
-                customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
-                saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
-            }else{
-                //error here
-                //System.out.println("Not saved: " + customFieldSystemId);
+                /*
+                if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
+                    //save scripts
+                    customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
+                    saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
+                }else{
+                    //error here
+                    //System.out.println("Not saved: " + customFieldSystemId);
+                }
+                */
+
+            }catch(Exception e){
+                System.out.println("Field " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid field.");
             }
-            */
         }
     }
 
     public static void getFormGetField(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf("form.getField("); index >= 0; index = scriptCode.indexOf("form.getField(",index+1)){
-            String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index)+2,
-                    scriptCode.indexOf(")",index) - 1
-            );
+            try {
+                String customFieldSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(", index) + 2,
+                        scriptCode.indexOf(")", index) - 1
+                );
 
-            //add custom field
-            CustomField cf = new CustomField();
-            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
-                cf.setSystemId(customFieldSystemId);
-                script.addUsesCustomFields(customFieldSystemId,cf);
-            }
+                //add custom field
+                CustomField cf = new CustomField();
+                if (!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)) {
+                    cf.setSystemId(customFieldSystemId);
+                    script.addUsesCustomFields(customFieldSystemId, cf);
+                }
 
-            /*
-            if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
-                //save scripts
-                customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
-                saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
-            }else{
-                //error here
-                //System.out.println("Not saved: " + customFieldSystemId);
+                /*
+                if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
+                    //save scripts
+                    customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
+                    saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
+                }else{
+                    //error here
+                    //System.out.println("Not saved: " + customFieldSystemId);
+                }
+                */
+            }catch(Exception e){
+                System.out.println("Field " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid field.");
             }
-            */
         }
     }
 
     public static void getFormSetValue(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf("form.setValue("); index >= 0; index = scriptCode.indexOf("form.setValue(",index+1)){
-            String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index)+2,
-                    scriptCode.indexOf(",",index) -1
-            );
+            try{
+                String customFieldSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(",index)+2,
+                        scriptCode.indexOf(",",index) -1
+                );
 
-            //add custom field
-            CustomField cf = new CustomField();
-            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
-                cf.setSystemId(customFieldSystemId);
-                script.addUsesCustomFields(customFieldSystemId,cf);
-            }
+                //add custom field
+                CustomField cf = new CustomField();
+                if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                    cf.setSystemId(customFieldSystemId);
+                    script.addUsesCustomFields(customFieldSystemId,cf);
+                }
 
-            /*
-            if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
-                //save scripts
-                customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
-                saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
-            }else{
-                //error here
-                //System.out.println("Not saved: " + customFieldSystemId);
+                /*
+                if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
+                    //save scripts
+                    customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
+                    saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
+                }else{
+                    //error here
+                    //System.out.println("Not saved: " + customFieldSystemId);
+                }
+                */
+
+            }catch(Exception e){
+                System.out.println("Field " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid field.");
             }
-            */
         }
     }
 
     public static void getCaseGetCustomFieldvalue(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf(".getCustomFieldValue("); index >= 0; index = scriptCode.indexOf(".getCustomFieldValue(",index+1)){
-            String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index)+2,
-                    scriptCode.indexOf(")",index) - 1
-            );
+            try{
+                String customFieldSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(",index)+2,
+                        scriptCode.indexOf(")",index) - 1
+                );
 
-            //add custom field
-            CustomField cf = new CustomField();
-            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
-                cf.setSystemId(customFieldSystemId);
-                script.addUsesCustomFields(customFieldSystemId,cf);
-            }
+                //add custom field
+                CustomField cf = new CustomField();
+                if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
+                    cf.setSystemId(customFieldSystemId);
+                    script.addUsesCustomFields(customFieldSystemId,cf);
+                }
 
-            /*
-            if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
-                //save scripts
-                customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
-                saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
-            }else{
-                //error here
-                //System.out.println("Not saved: " + customFieldSystemId);
+                /*
+                if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
+                    //save scripts
+                    customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
+                    saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
+                }else{
+                    //error here
+                    //System.out.println("Not saved: " + customFieldSystemId);
+                }
+                */
+
+            }catch(Exception e){
+                System.out.println("Field " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid field.");
             }
-            */
         }
     }
 
     public static void getCaseSetCustomField(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf(".setCustomField("); index >= 0; index = scriptCode.indexOf(".setCustomField(",index+1)){
-            String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index)+2,
-                    scriptCode.indexOf(",",index) - 1
-            );
+            try {
+                String customFieldSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(", index) + 2,
+                        scriptCode.indexOf(",", index) - 1
+                );
 
-            //add custom field
-            CustomField cf = new CustomField();
-            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
-                cf.setSystemId(customFieldSystemId);
-                script.addUsesCustomFields(customFieldSystemId,cf);
-            }
+                //add custom field
+                CustomField cf = new CustomField();
+                if (!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)) {
+                    cf.setSystemId(customFieldSystemId);
+                    script.addUsesCustomFields(customFieldSystemId, cf);
+                }
 
-            /*
-            if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
-                //save scripts
-                customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
-                saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
-            }else{
-                //error here
-                //System.out.println("Not saved: " + customFieldSystemId);
+                /*
+                if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
+                    //save scripts
+                    customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
+                    saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
+                }else{
+                    //error here
+                    //System.out.println("Not saved: " + customFieldSystemId);
+                }
+                */
+            }catch(Exception e){
+                System.out.println("Field " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid field.");
             }
-            */
         }
     }
 
     public static void getCaseGetCustomField(String scriptCode, String scriptSystemId, Script script){
         //go through each instance
         for(int index = scriptCode.indexOf(".getCustomField("); index >= 0; index = scriptCode.indexOf(".getCustomField(",index+1)){
-            String customFieldSystemId = scriptCode.substring(
-                    scriptCode.indexOf("(",index)+2,
-                    scriptCode.indexOf(")",index) - 1
-            );
+            try {
+                String customFieldSystemId = scriptCode.substring(
+                        scriptCode.indexOf("(", index) + 2,
+                        scriptCode.indexOf(")", index) - 1
+                );
 
-            //add custom field
-            CustomField cf = new CustomField();
-            if(!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)){
-                cf.setSystemId(customFieldSystemId);
-                script.addUsesCustomFields(customFieldSystemId,cf);
-            }
+                //add custom field
+                CustomField cf = new CustomField();
+                if (!nullCheck(customFieldSystemId).isEmpty() && !script.getUsesCustomFields().containsKey(customFieldSystemId)) {
+                    cf.setSystemId(customFieldSystemId);
+                    script.addUsesCustomFields(customFieldSystemId, cf);
+                }
 
-            /*
-            if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
-                //save scripts
-                customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
-                saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
-            }else{
-                //error here
-                //System.out.println("Not saved: " + customFieldSystemId);
+                /*
+                if(customFieldSystemId.contains("'") || customFieldSystemId.contains("\"")){
+                    //save scripts
+                    customFieldSystemId = customFieldSystemId.substring(1,customFieldSystemId.length()-1);
+                    saveCustomFieldUsages(scriptSystemId, customFieldSystemId, script);
+                }else{
+                    //error here
+                    //System.out.println("Not saved: " + customFieldSystemId);
+                }
+                */
+            }catch(Exception e){
+                System.out.println("Field " + scriptCode.substring(scriptCode.indexOf("(", index), scriptCode.indexOf(")", index)) + " is not a valid field.");
             }
-            */
         }
     }
 
