@@ -283,7 +283,7 @@
 		  					<#if fileBasedLinks>
 		  						<a href="file:../customparams/${uses.name}.html">${uses.name}</a>
 		  					<#else>
-		  						<a href="${articleBaseUrl + uses.name?replace('_',replaceSpacesInUrlsWith,'r')}">${uses.name}</a>
+		  						<a href="${articleBaseUrl + uses.name?replace('_',replaceSpacesInUrlsWith,'r')?replace('.','-')}">${uses.name}</a>
 		  					</#if>
 		  				</td>
 		  			</tr>

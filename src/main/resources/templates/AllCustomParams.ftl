@@ -238,7 +238,7 @@
 						<#if fileBasedLinks>
 		  					<a href="file:customparams/${customparam.name}.html">${(customparam.name)!" "}</a>
 		  				<#else>
-		  					<a href="${articleBaseUrl + customparam.name?replace('_',replaceSpacesInUrlsWith,'r')}">${(customparam.name)!" "}</a>
+		  					<a href="${articleBaseUrl + customparam.name?replace('_',replaceSpacesInUrlsWith,'r')?replace('.','-')}">${(customparam.name)!" "}</a>
 		  				</#if>
 					</td>
 					<td class="default">${(customparam.type) !" "}</td>

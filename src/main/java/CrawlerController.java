@@ -948,7 +948,7 @@ public class CrawlerController {
                 cpInput.put("workflowSystemIds",workflowSystemIds);
 
                 //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\customparams\\" + cp.getName() + ".html"));
-                Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\customparams\\" + cp.getName() + ".html"));
+                Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\customparams\\" + cp.getName().replaceAll("\\.", "-") + ".html"));
                 try {
                     customParamTemplate.process(cpInput, writer);
                 } catch (TemplateException e) {
