@@ -305,7 +305,7 @@
 										<#if fileBasedLinks>
 											<a href="file:../workflows/${usage.systemId}.html">${usage.name}</a>
 					  					<#else>
-					  						<a href="${articleBaseUrl + usage.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">usage.name</a>
+					  						<a href="${articleBaseUrl + usage.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${usage.name}</a>
 					  					</#if>
 									</td>
 								</tr>

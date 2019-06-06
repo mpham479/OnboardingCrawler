@@ -345,7 +345,7 @@
 										<#if fileBasedLinks>
 											<a href="file:../workflows/${(workflowNames[usage.Workflow].systemId)}.html">${usage.Workflow}</a>
 					  					<#else>
-					  						<a href="${articleBaseUrl + workflowNames[usage.Workflow].systemId?replace('_',replaceSpacesInUrlsWith,'r')}">usage.Workflow</a>
+					  						<a href="${articleBaseUrl + workflowNames[usage.Workflow].systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${usage.Workflow}</a>
 					  					</#if>
 									</td>
 									<td class="default" style="white-space:normal;">${(usage.Action)!" "}</td>
