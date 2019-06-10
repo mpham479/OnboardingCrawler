@@ -172,7 +172,7 @@
 		padding: 10px 20px 20px 20px;
 		border: 1px solid #888;
 		width: 80%;
-		height: 95%;
+		height: 700px;
 	}
 	
 	/* Adjustable Modal Content */
@@ -320,14 +320,14 @@
 				document.getElementById('iframe').setAttribute("onload","iframeLoaded()");
 		  	<#else>
 		  		<#if usedInClickHelp>
-		  			frameUrl = "${articleBaseUrl}" + ele.parentElement.parentElement.parentElement.getAttribute("systemid").replace(/_/g,'${replaceSpacesInUrlsWith}');
+		  			frameUrl = "${articleBaseUrl}" + ele.parentElement.parentElement.parentElement.getAttribute("systemid").replace(/_/g,'${replaceSpacesInUrlsWith}').replace("\\.", "-");
 			  		modal.style.display = "block"
 		  			loading.style.display = "inline"
 					document.getElementById('iframe').setAttribute("src",frameUrl);
 				    document.getElementById('iframe').setAttribute("data-url-changed",frameUrl);
 					document.getElementById('iframe').setAttribute("onload","loadScriptInClickHelp(this)");
 		  		<#else>
-		  			frameUrl = "${articleBaseUrl}" + ele.parentElement.parentElement.parentElement.getAttribute("systemid").replace(/_/g,'${replaceSpacesInUrlsWith}');
+		  			frameUrl = "${articleBaseUrl}" + ele.parentElement.parentElement.parentElement.getAttribute("systemid").replace(/_/g,'${replaceSpacesInUrlsWith}').replace("\\.", "-");
 		  			modal.style.display = "block"
 					loading.style.display = "inline"
 					document.getElementById('iframe').setAttribute("src",frameUrl);

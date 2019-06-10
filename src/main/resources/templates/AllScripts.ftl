@@ -172,7 +172,7 @@
 		padding: 10px 20px 20px 20px;
 		border: 1px solid #888;
 		width: 80%;
-		height: 95%;
+		height: 700px;
 	}
 	
 	/* Adjustable Modal Content */

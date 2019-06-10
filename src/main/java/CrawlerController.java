@@ -150,7 +150,7 @@ public class CrawlerController {
         int width = screenSize.width;
         //frame.setSize(width/4, height/2);
         frame.pack();
-        frame.setMinimumSize(new Dimension(500,480));
+        frame.setMinimumSize(new Dimension(500,600));
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
