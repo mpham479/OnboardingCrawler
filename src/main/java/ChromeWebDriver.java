@@ -13,13 +13,14 @@ public class ChromeWebDriver {
     public org.openqa.selenium.WebDriver setupDriver(){
 
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("headless");
-        options.addArguments("window-size=1200,1100");
+        //options.addArguments("headless");
+        options.addArguments("window-size=1500,1500");
+        options.addArguments("--hide-scrollbars");
 
         System.setProperty("webdriver.chrome.driver", CrawlerController.chromeDriverLocation);
 
         //create new webdriver instance
-        org.openqa.selenium.WebDriver driver = new ChromeDriver(options);;
+        org.openqa.selenium.WebDriver driver = new ChromeDriver(options);
 
         //go to url
         driver.get(CrawlerController.baseUrl + "userHome.do?&tenantName=" + CrawlerController.tenant);

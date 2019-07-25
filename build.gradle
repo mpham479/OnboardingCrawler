@@ -17,6 +17,7 @@ dependencies {
         "net.sourceforge.htmlunit:htmlunit:2.33",
         "org.seleniumhq.selenium:selenium-java:3.14.0",
         "org.freemarker:freemarker:2.3.28",
-        "org.jsoup:jsoup:1.11.3"
+        "org.jsoup:jsoup:1.11.3",
+        "ru.yandex.qatools.ashot:ashot:1.5.2"    
     )
 }

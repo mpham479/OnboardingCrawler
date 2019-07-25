@@ -256,7 +256,7 @@ public class CustomFieldCrawler {
                 String url = null;
 
                 for(Element link : getlastInstances) {
-                    int currentPage = Integer.valueOf(link.attr("href").substring(link.attr("href").indexOf("=") + 1, link.attr("href").length()));
+                    int currentPage = Integer.valueOf(link.attr("href").substring(link.attr("href").indexOf("=") + 1));
                     String currentUrl = link.attr("href").substring(link.attr("href").indexOf("?") + 1, link.attr("href").indexOf("="));
                     for(Element imgChild : link.children()) {
                         if (imgChild.attr("src").equalsIgnoreCase("/wpm/img/displaytag/last.gif")) {

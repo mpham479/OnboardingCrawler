@@ -40,6 +40,7 @@ public class CustomField {
     private String label;
     private HashMap<String, Script> usedByScripts = new HashMap<>();   //systemid, script
     private HashMap<String, Workflow> usedInWorkflow = new HashMap<>();   //name, workflow
+    private HashMap<String, Form> usedInForms = new HashMap<>();   //systemid, form
     private HashSet<Map<String,String>> actionUsages = new HashSet<>();
 
     /**
@@ -82,7 +83,11 @@ public class CustomField {
     }
 
     public HashMap<String, Workflow> getUsedInWorkflow() {
-        return usedInWorkflow;
+        return this.usedInWorkflow;
+    }
+
+    public HashMap<String, Form> getUsedInForms() {
+        return this.usedInForms;
     }
 
     public void setId(String id){
@@ -119,6 +124,10 @@ public class CustomField {
 
     public void addUsedInWorkflow(String name, Workflow workflow){
         this.usedInWorkflow.put(name,workflow);
+    }
+
+    public void addUsedInForms(String systemid, Form form) {
+        this.usedInForms.put(systemid, form);
     }
 
     public void removeUsedByScripts(String systemId){

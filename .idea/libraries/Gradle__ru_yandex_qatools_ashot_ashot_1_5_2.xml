@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: ru.yandex.qatools.ashot:ashot:1.5.2">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/ru.yandex.qatools.ashot/ashot/1.5.2/a849cb78011c6a3cb9fa3b5812d20b1943b11615/ashot-1.5.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/ru.yandex.qatools.ashot/ashot/1.5.2/27754e5ceb2ccc5b91c8fce8b61af2efb45be1fb/ashot-1.5.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

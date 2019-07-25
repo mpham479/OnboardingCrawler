@@ -323,6 +323,39 @@
 		</div>
 	</#if>
 
+		  <#if usedInForm?has_content>
+			  <div class="tableBlock">
+				  <span class="h2Copy">Used in the following forms:</span>
+				  <table class="data">
+					  <thead>
+					  <th class="colHeader clickableHeader noSelect imgHover"
+						  onclick="sortTable(0,this.parentElement.parentElement.parentElement)" sortdir="">Name <img
+								  src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'>
+					  </th>
+					  <th class="colHeader clickableHeader noSelect imgHover"
+						  onclick="sortTable(1,this.parentElement.parentElement.parentElement)" sortdir="">System Id
+						  <img src="" class="imgOn" style='width:14px'><img src="" class="imgOff" style='width:14px'>
+					  </th>
+					  </thead>
+					  <tbody>
+					  <#foreach uses in usedInForm?values>
+						  <tr class='${["scriptOdd", "scriptEven"][uses_index%2]}'>
+							  <td class="default">
+								  <#if fileBasedLinks>
+									  <a href="file:../forms/${uses.systemid}.${baseExt}">${(uses.name)!uses.systemid}</a>
+								  <#else>
+									  <a href="${articleBaseUrl + uses.systemid?replace('_',replaceSpacesInUrlsWith,'r')}">${(uses.name)!uses.systemid}</a>
+								  </#if>
+							  </td>
+							  <td class="default">${(uses.systemid)!" "}</td>
+						  </tr>
+					  </#foreach>
+					  </tbody>
+				  </table>
+
+			  </div>
+		  </#if>
+
 	<#if actionUsages?has_content>
 		<div class="tableBlock">
 			<span class="h2Copy">Used in the following actions:</span>

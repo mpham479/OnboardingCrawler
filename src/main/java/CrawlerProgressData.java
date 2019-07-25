@@ -31,6 +31,13 @@ public class CrawlerProgressData {
     public JPanel scriptProgressPanel;
     public JPanel scriptLoadingPanel;
     public JPanel scriptLoadingImage;
+    public JPanel formData;
+    public JPanel formProgressPanel;
+    public JPanel formLoadingPanel;
+    public JPanel formLoadingImage;
+    public JProgressBar formProgress;
+    public JScrollPane formScroll;
+    public JTextArea formList;
 
     public CrawlerProgressData(){
 

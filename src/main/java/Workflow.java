@@ -9,6 +9,7 @@ public class Workflow {
     private HashMap<String, Script> usesScripts = new HashMap<>();   //systemid, script
     private HashMap<String, CustomField> usesCustomFieldsSysId  = new HashMap<>();   //name, cf
     private HashMap<String, CustomParam> usesCustomParams  = new HashMap<>();   //name, cp
+    private HashMap<String, Form> usesForms = new HashMap<>(); //systemid, form
 
     public Workflow(){
 
@@ -42,6 +43,10 @@ public class Workflow {
         return this.usesCustomParams;
     }
 
+    public HashMap<String, Form> getUsesForms() {
+        return usesForms;
+    }
+
     public void setId(String id){
         this.id = id;
     }
@@ -70,6 +75,10 @@ public class Workflow {
         this.usesCustomParams.put(systemId,customParam);
     }
 
+    public void addUsesForms(String systemId, Form form) {
+        this.usesForms.put(systemId, form);
+    }
+
     public void removeUsedScripts(String systemId){
         this.usesScripts.remove(systemId);
     }
@@ -80,6 +89,10 @@ public class Workflow {
 
     public void removeUsesCustomParams(String systemId){
         this.usesCustomParams.remove(systemId);
+    }
+
+    public void removeUsesForms(String systemId) {
+        this.usesForms.remove(systemId);
     }
 
 }
