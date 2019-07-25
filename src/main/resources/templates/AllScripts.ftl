@@ -236,7 +236,7 @@
 				<tr class='${["odd", "even"][script_index%2]}' systemid='${script.systemId}'>
 					<td class="default">
 						<#if fileBasedLinks>
-		  					<a href="file:scripts/${script.systemId}.html">${(script.name)!" "}</a>
+							<a href="file:scripts/${script.systemId}.${baseExt}">${(script.name)!" "}</a>
 		  				<#else>
 		  					<a href="${articleBaseUrl + script.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(script.name)!" "}</a>
 		  				</#if>
@@ -311,7 +311,7 @@
 		function openModalInfo(ele){
 			var frameUrl = '';
 			<#if fileBasedLinks>
-		  		frameUrl = "file:scripts/" + ele.parentElement.parentElement.parentElement.getAttribute("systemid") + ".html"
+			frameUrl = "file:scripts/" + ele.parentElement.parentElement.parentElement.getAttribute("systemid") + ".${baseExt}"
 		  		modal.style.display = "block"
 		  		loading.style.display = "none"
 				document.getElementById('iframe').setAttribute("src",frameUrl);

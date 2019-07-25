@@ -24,6 +24,8 @@ public class CrawlerGatherData {
     public JButton submitButton;
     public JPanel linkReferencesPanel;
     public JLabel fileReferenceLabel;
+    public JLabel extLabel;
+    public JTextField extInput;
 
     public CrawlerGatherData(){
 

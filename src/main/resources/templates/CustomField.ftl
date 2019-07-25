@@ -282,7 +282,7 @@
 						<tr class='${["scriptOdd", "scriptEven"][uses_index%2]}'>
 			  				<td class="default">
 			  					<#if fileBasedLinks>
-			  						<a href="file:../scripts/${uses.systemId}.html">${(uses.name)!uses.systemId}</a>
+									<a href="file:../scripts/${uses.systemId}.${baseExt}">${(uses.name)!uses.systemId}</a>
 			  					<#else>
 			  						<a href="${articleBaseUrl + uses.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(uses.name)!uses.systemId}</a>
 			  					</#if>
@@ -309,7 +309,7 @@
 						<tr class='${["scriptOdd", "scriptEven"][uses_index%2]}'>
 			  				<td class="default">
 			  					<#if fileBasedLinks>
-			  						<a href="file:../workflows/${uses.systemId}.html">${(uses.name)!uses.systemId}</a>
+									<a href="file:../workflows/${uses.systemId}.${baseExt}">${(uses.name)!uses.systemId}</a>
 			  					<#else>
 			  						<a href="${articleBaseUrl + uses.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(uses.name)!uses.systemId}</a>
 			  					</#if>
@@ -376,7 +376,7 @@
 								<tr class='${["scriptOdd", "scriptEven"][usage_index%2]}'>
 									<td class="default">
 										<#if fileBasedLinks>
-											<a href="file:../workflows/${(workflowNames[usage.Workflow].systemId)}.html">${usage.Workflow}</a>
+											<a href="file:../workflows/${(workflowNames[usage.Workflow].systemId)}.${baseExt}">${usage.Workflow}</a>
 					  					<#else>
 					  						<a href="${articleBaseUrl + workflowNames[usage.Workflow].systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${usage.Workflow}</a>
 					  					</#if>

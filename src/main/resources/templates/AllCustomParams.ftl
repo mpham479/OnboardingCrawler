@@ -236,7 +236,7 @@
 				<tr class='${["odd", "even"][customparam_index%2]}' systemid='${customparam.name}'>
 					<td class="default">
 						<#if fileBasedLinks>
-		  					<a href="file:customparams/${customparam.name}.html">${(customparam.name)!" "}</a>
+							<a href="file:customparams/${customparam.name}.${baseExt}">${(customparam.name)!" "}</a>
 		  				<#else>
 		  					<a href="${articleBaseUrl + customparam.name?replace('_',replaceSpacesInUrlsWith,'r')?replace('.','-')}">${(customparam.name)!" "}</a>
 		  				</#if>
@@ -311,7 +311,7 @@
 		function openModalInfo(ele){
 			var frameUrl = '';
 			<#if fileBasedLinks>
-		  		frameUrl = "file:customparams/" + ele.parentElement.parentElement.parentElement.getAttribute("systemid") + ".html"
+			frameUrl = "file:customparams/" + ele.parentElement.parentElement.parentElement.getAttribute("systemid") + ".${baseExt}"
 		  		modal.style.display = "block"
 		  		loading.style.display = "none"
 				document.getElementById('iframe').setAttribute("src",frameUrl);

@@ -237,7 +237,7 @@
 				<tr class='${["odd", "even"][customfield_index%2]}' systemid='${customfield.systemId}'>
 					<td class="default">
 						<#if fileBasedLinks>
-		  					<a href="file:customfields/${customfield.systemId}.html">${(customfield.name)!" "}</a>
+							<a href="file:customfields/${customfield.systemId}.${baseExt}">${(customfield.name)!" "}</a>
 		  				<#else>
 		  					<a href="${articleBaseUrl + customfield.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(customfield.name)!" "}</a>
 		  				</#if>
@@ -313,7 +313,7 @@
 		function openModalInfo(ele){
 			var frameUrl = '';
 			<#if fileBasedLinks>
-		  		frameUrl = "file:customfields/" + ele.parentElement.parentElement.parentElement.getAttribute("systemid") + ".html"
+			frameUrl = "file:customfields/" + ele.parentElement.parentElement.parentElement.getAttribute("systemid") + ".${baseExt}"
 		  		modal.style.display = "block"
 		  		loading.style.display = "none"
 				document.getElementById('iframe').setAttribute("src",frameUrl);

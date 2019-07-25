@@ -97,7 +97,7 @@
       </vspacer>
       <grid id="46df5" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="11" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="13" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties/>
@@ -139,7 +139,7 @@
       </grid>
       <component id="8871f" class="javax.swing.JLabel" binding="fileReferenceLabel">
         <constraints>
-          <grid row="12" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="14" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -149,7 +149,7 @@
       </component>
       <grid id="93e4" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="13" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="15" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties/>
@@ -195,7 +195,7 @@
       </grid>
       <component id="be929" class="javax.swing.JButton" binding="submitButton" default-binding="true">
         <constraints>
-          <grid row="20" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="22" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
@@ -205,7 +205,7 @@
       </component>
       <grid id="17d9f" binding="linkReferencesPanel" layout-manager="GridBagLayout">
         <constraints>
-          <grid row="14" column="1" row-span="6" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="16" column="1" row-span="6" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
           <gridbag weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties/>
@@ -320,6 +320,25 @@
           <font name="Serif" size="20" style="1"/>
           <text value=" Use at your own risk."/>
         </properties>
+      </component>
+      <component id="81dde" class="javax.swing.JLabel" binding="extLabel">
+        <constraints>
+          <grid row="11" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+          <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties>
+          <text value="File Extension"/>
+          <toolTipText value="Tenant to log in to"/>
+        </properties>
+      </component>
+      <component id="6d3fd" class="javax.swing.JTextField" binding="extInput">
+        <constraints>
+          <grid row="12" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="9" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+          <gridbag weightx="0.0" weighty="0.0"/>
+        </constraints>
+        <properties/>
       </component>
     </children>
   </grid>

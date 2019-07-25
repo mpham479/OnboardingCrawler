@@ -102,36 +102,39 @@ public class CrawlerController {
           String variable = line.split("=")[0];
           String value = line.split("=")[1];
 
-                    switch (variable.toUpperCase()){
-                        case "BASEURL":
-                            baseUrl = value;
-                            break;
-                        case "USERNAME":
-                            username = value;
-                            break;
-                        case "PASSWORD":
-                            password = value;
-                            break;
-                        case "TENANT":
-                            tenant = value;
-                            break;
-                        case "SAVEDIRECTORY":
-                            saveDirectory = value;
-                            break;
-                        case "FILEBASEDLINKS":
-                            fileBasedLinks = Boolean.valueOf(value);
-                            break;
-                        case "USEDINCLICKHELP":
-                            usedInClickHelp = Boolean.valueOf(value);
-                            break;
-                        case "ARTICLEBASEURL":
-                            articleBaseUrl = value;
-                            break;
-                        case "IMGBASEURL":
-                            imgBaseUrl = value;
-                            break;
-                    }
-                }catch(Exception e){
+          switch (variable.toUpperCase()) {
+            case "BASEURL":
+              baseUrl = value;
+              break;
+            case "USERNAME":
+              username = value;
+              break;
+            case "PASSWORD":
+              password = value;
+              break;
+            case "TENANT":
+              tenant = value;
+              break;
+            case "BASEEXT":
+              baseExt = value;
+              break;
+            case "SAVEDIRECTORY":
+              saveDirectory = value;
+              break;
+            case "FILEBASEDLINKS":
+              fileBasedLinks = Boolean.valueOf(value);
+              break;
+            case "USEDINCLICKHELP":
+              usedInClickHelp = Boolean.valueOf(value);
+              break;
+            case "ARTICLEBASEURL":
+              articleBaseUrl = value;
+              break;
+            case "IMGBASEURL":
+              imgBaseUrl = value;
+              break;
+          }
+        } catch (Exception e) {
 
         }
       }
@@ -250,31 +253,33 @@ public class CrawlerController {
       }
     };
 
-        //add document listener to fields
-        data.urlInput.getDocument().addDocumentListener(dL);
-        data.usernameInput.getDocument().addDocumentListener(dL);
-        data.passwordInput.getDocument().addDocumentListener(dL);
-        data.tenantInput.getDocument().addDocumentListener(dL);
-        data.chooseSaveDirectoryTextField.getDocument().addDocumentListener(dL);
-        data.articleUrlInput.getDocument().addDocumentListener(dL);
-        data.imageUrlInput.getDocument().addDocumentListener(dL);
+    //add document listener to fields
+    data.urlInput.getDocument().addDocumentListener(dL);
+    data.usernameInput.getDocument().addDocumentListener(dL);
+    data.passwordInput.getDocument().addDocumentListener(dL);
+    data.tenantInput.getDocument().addDocumentListener(dL);
+    data.extInput.getDocument().addDocumentListener(dL);
+    data.chooseSaveDirectoryTextField.getDocument().addDocumentListener(dL);
+    data.articleUrlInput.getDocument().addDocumentListener(dL);
+    data.imageUrlInput.getDocument().addDocumentListener(dL);
 
     //add submit button click
     data.submitButton.setAction(new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
 
-                //set data
-                baseUrl = data.urlInput.getText();
-                username = data.usernameInput.getText();
-                password = String.valueOf(data.passwordInput.getPassword());
-                //password = data.passwordInput.getText();
-                tenant = data.tenantInput.getText();
-                saveDirectory = data.chooseSaveDirectoryTextField.getText();
-                fileBasedLinks = data.fileReferenceYes.isSelected();
-                usedInClickHelp = data.clickHelpYes.isSelected();
-                articleBaseUrl = data.articleUrlInput.getText();
-                imgBaseUrl = data.imageUrlInput.getText();
+        //set data
+        baseUrl = data.urlInput.getText();
+        username = data.usernameInput.getText();
+        password = String.valueOf(data.passwordInput.getPassword());
+        //password = data.passwordInput.getText();
+        tenant = data.tenantInput.getText();
+        baseExt = data.extInput.getText();
+        saveDirectory = data.chooseSaveDirectoryTextField.getText();
+        fileBasedLinks = data.fileReferenceYes.isSelected();
+        usedInClickHelp = data.clickHelpYes.isSelected();
+        articleBaseUrl = data.articleUrlInput.getText();
+        imgBaseUrl = data.imageUrlInput.getText();
 
         //jframe to use specified class
         CrawlerProgressData progressData = new CrawlerProgressData();
@@ -309,12 +314,13 @@ public class CrawlerController {
     });
     data.submitButton.setText("Submit");
 
-        //set up initial data
-        data.urlInput.setText(baseUrl);
-        data.usernameInput.setText(username);
-        data.passwordInput.setText(password);
-        data.tenantInput.setText(tenant);
-        data.chooseSaveDirectoryTextField.setText(saveDirectory);
+    //set up initial data
+    data.urlInput.setText(baseUrl);
+    data.usernameInput.setText(username);
+    data.passwordInput.setText(password);
+    data.tenantInput.setText(tenant);
+    data.extInput.setText(baseExt);
+    data.chooseSaveDirectoryTextField.setText(saveDirectory);
 
     if(fileBasedLinks != null){
       data.fileReferenceYes.setSelected(fileBasedLinks);
@@ -771,21 +777,22 @@ public class CrawlerController {
       es.shutdown();
       boolean finished = es.awaitTermination(30, TimeUnit.MINUTES);
 
-            if(finished && !interrupted){
-                //successfully crawled designated url
-                //save settings to file
-                PrintWriter writeText = new PrintWriter(System.getProperty("user.dir") + "\\src\\main\\resources\\settings\\settings.txt","UTF-8");
-                writeText.println("baseUrl=" + baseUrl);
-                writeText.println("username=" + username);
-                writeText.println("password=" + password);
-                writeText.println("tenant=" + tenant);
-                writeText.println("saveDirectory=" + saveDirectory);
-                writeText.println("fileBasedLinks=" + String.valueOf(fileBasedLinks));
-                writeText.println("usedInClickHelp=" + String.valueOf(usedInClickHelp));
-                writeText.println("articleBaseUrl=" + articleBaseUrl);
-                writeText.println("imgBaseUrl=" + imgBaseUrl);
-                //writeText.println("replaceSpacesInUrlsWith=" + replaceSpacesInUrlsWith);
-                writeText.close();
+      if (finished && !interrupted) {
+        //successfully crawled designated url
+        //save settings to file
+        PrintWriter writeText = new PrintWriter(System.getProperty("user.dir") + "\\src\\main\\resources\\settings\\settings.txt", "UTF-8");
+        writeText.println("baseUrl=" + baseUrl);
+        writeText.println("username=" + username);
+        writeText.println("password=" + password);
+        writeText.println("tenant=" + tenant);
+        writeText.println("saveDirectory=" + saveDirectory);
+        writeText.println("fileBasedLinks=" + String.valueOf(fileBasedLinks));
+        writeText.println("usedInClickHelp=" + String.valueOf(usedInClickHelp));
+        writeText.println("articleBaseUrl=" + articleBaseUrl);
+        writeText.println("imgBaseUrl=" + imgBaseUrl);
+        writeText.println("baseExt=" + baseExt);
+        //writeText.println("replaceSpacesInUrlsWith=" + replaceSpacesInUrlsWith);
+        writeText.close();
 
         //fill out custom field data
         for(Map.Entry<String, CustomField> cfMap : customFieldNames.entrySet()){
@@ -915,47 +922,63 @@ public class CrawlerController {
 
     Map<String, Object> allWorkflowsInput = new HashMap<String,Object>();
 
-        allWorkflowsInput.put("title", "Workflows");
-        allWorkflowsInput.put("name", "Workflows");
-        allWorkflowsInput.put("workflows",workflowNames);
-        allWorkflowsInput.put("fileBasedLinks",fileBasedLinks);
-        allWorkflowsInput.put("articleBaseUrl",articleBaseUrl);
-        allWorkflowsInput.put("imgBaseUrl",imgBaseUrl);
-        allWorkflowsInput.put("replaceSpacesInUrlsWith",replaceSpacesInUrlsWith);
-        allWorkflowsInput.put("usedInClickHelp",usedInClickHelp);
+    allWorkflowsInput.put("title", "Workflows");
+    allWorkflowsInput.put("name", "Workflows");
+    allWorkflowsInput.put("workflows", workflowNames);
+    allWorkflowsInput.put("fileBasedLinks", fileBasedLinks);
+    allWorkflowsInput.put("articleBaseUrl", articleBaseUrl);
+    allWorkflowsInput.put("imgBaseUrl", imgBaseUrl);
+    allWorkflowsInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
+    allWorkflowsInput.put("usedInClickHelp", usedInClickHelp);
+    allWorkflowsInput.put("baseExt", baseExt);
 
     Map<String, Object> allCustomParamsInput = new HashMap<String,Object>();
 
-        allCustomParamsInput.put("title", "Custom Params");
-        allCustomParamsInput.put("name", "Custom Params");
-        allCustomParamsInput.put("customparams",customParams);
-        allCustomParamsInput.put("fileBasedLinks",fileBasedLinks);
-        allCustomParamsInput.put("articleBaseUrl",articleBaseUrl);
-        allCustomParamsInput.put("imgBaseUrl",imgBaseUrl);
-        allCustomParamsInput.put("replaceSpacesInUrlsWith",replaceSpacesInUrlsWith);
-        allCustomParamsInput.put("usedInClickHelp",usedInClickHelp);
+    allCustomParamsInput.put("title", "Custom Params");
+    allCustomParamsInput.put("name", "Custom Params");
+    allCustomParamsInput.put("customparams", customParams);
+    allCustomParamsInput.put("fileBasedLinks", fileBasedLinks);
+    allCustomParamsInput.put("articleBaseUrl", articleBaseUrl);
+    allCustomParamsInput.put("imgBaseUrl", imgBaseUrl);
+    allCustomParamsInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
+    allCustomParamsInput.put("usedInClickHelp", usedInClickHelp);
+    allCustomParamsInput.put("baseExt", baseExt);
 
     Map<String, Object> allCustomFieldsInput = new HashMap<String,Object>();
 
-        allCustomFieldsInput.put("title", "Custom Fields");
-        allCustomFieldsInput.put("name", "Custom Fields");
-        allCustomFieldsInput.put("customfields",customFieldSystemIds);
-        allCustomFieldsInput.put("fileBasedLinks",fileBasedLinks);
-        allCustomFieldsInput.put("articleBaseUrl",articleBaseUrl);
-        allCustomFieldsInput.put("imgBaseUrl",imgBaseUrl);
-        allCustomFieldsInput.put("replaceSpacesInUrlsWith",replaceSpacesInUrlsWith);
-        allCustomFieldsInput.put("usedInClickHelp",usedInClickHelp);
+    allCustomFieldsInput.put("title", "Custom Fields");
+    allCustomFieldsInput.put("name", "Custom Fields");
+    allCustomFieldsInput.put("customfields", customFieldSystemIds);
+    allCustomFieldsInput.put("fileBasedLinks", fileBasedLinks);
+    allCustomFieldsInput.put("articleBaseUrl", articleBaseUrl);
+    allCustomFieldsInput.put("imgBaseUrl", imgBaseUrl);
+    allCustomFieldsInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
+    allCustomFieldsInput.put("usedInClickHelp", usedInClickHelp);
+    allCustomFieldsInput.put("baseExt", baseExt);
 
     Map<String, Object> allScriptsInput = new HashMap<String, Object>();
 
-        allScriptsInput.put("title", "Script List");
-        allScriptsInput.put("name", "Scripts");
-        allScriptsInput.put("scripts",scripts);
-        allScriptsInput.put("fileBasedLinks",fileBasedLinks);
-        allScriptsInput.put("articleBaseUrl",articleBaseUrl);
-        allScriptsInput.put("imgBaseUrl",imgBaseUrl);
-        allScriptsInput.put("replaceSpacesInUrlsWith",replaceSpacesInUrlsWith);
-        allScriptsInput.put("usedInClickHelp",usedInClickHelp);
+    allScriptsInput.put("title", "Script List");
+    allScriptsInput.put("name", "Scripts");
+    allScriptsInput.put("scripts", scripts);
+    allScriptsInput.put("fileBasedLinks", fileBasedLinks);
+    allScriptsInput.put("articleBaseUrl", articleBaseUrl);
+    allScriptsInput.put("imgBaseUrl", imgBaseUrl);
+    allScriptsInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
+    allScriptsInput.put("usedInClickHelp", usedInClickHelp);
+    allScriptsInput.put("baseExt", baseExt);
+
+    Map<String, Object> allFormsInput = new HashMap<String, Object>();
+
+    allFormsInput.put("title", "Form List");
+    allFormsInput.put("name", "Forms");
+    allFormsInput.put("forms", forms);
+    allFormsInput.put("fileBasedLinks", fileBasedLinks);
+    allFormsInput.put("articleBaseUrl", articleBaseUrl);
+    allFormsInput.put("imgBaseUrl", imgBaseUrl);
+    allFormsInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
+    allFormsInput.put("usedInClickHelp", usedInClickHelp);
+    allFormsInput.put("baseExt", baseExt);
 
     // 2.2. Get the template
 
@@ -970,38 +993,38 @@ public class CrawlerController {
     Template customFieldTemplate = cfg.getTemplate("CustomField.ftl");
     Template formTemplate = cfg.getTemplate("Form.ftl");
 
-        //workflow file writer
-        //Writer workFlowListFileWriter = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\workflowList.html"));
-        Writer workFlowListFileWriter = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\workflowList.html"));
-        try {
-            allWorkflowsTemplate.process(allWorkflowsInput, workFlowListFileWriter);
-        } catch (TemplateException e) {
-            e.printStackTrace();
-        } finally {
-            workFlowListFileWriter.close();
-        }
+    //workflow file writer
+    //Writer workFlowListFileWriter = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\workflowList.html"));
+    Writer workFlowListFileWriter = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\workflowList." + baseExt));
+    try {
+      allWorkflowsTemplate.process(allWorkflowsInput, workFlowListFileWriter);
+    } catch (TemplateException e) {
+      e.printStackTrace();
+    } finally {
+      workFlowListFileWriter.close();
+    }
 
-        //custom param file writer
-        //Writer customParamListFileWriter = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\customparamList.html"));
-        Writer customParamListFileWriter = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\customparamList.html"));
-        try {
-            allCustomParamsTemplate.process(allCustomParamsInput, customParamListFileWriter);
-        } catch (TemplateException e) {
-            e.printStackTrace();
-        } finally {
-            customParamListFileWriter.close();
-        }
+    //custom param file writer
+    //Writer customParamListFileWriter = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\customparamList.html"));
+    Writer customParamListFileWriter = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\customparamList." + baseExt));
+    try {
+      allCustomParamsTemplate.process(allCustomParamsInput, customParamListFileWriter);
+    } catch (TemplateException e) {
+      e.printStackTrace();
+    } finally {
+      customParamListFileWriter.close();
+    }
 
-        //custom field file writer
-        //Writer customFieldListFileWriter = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\customfieldList.html"));
-        Writer customFieldListFileWriter = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\customfieldList.html"));
-        try {
-            allCustomFieldsTemplate.process(allCustomFieldsInput, customFieldListFileWriter);
-        } catch (TemplateException e) {
-            e.printStackTrace();
-        } finally {
-            customFieldListFileWriter.close();
-        }
+    //custom field file writer
+    //Writer customFieldListFileWriter = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\customfieldList.html"));
+    Writer customFieldListFileWriter = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\customfieldList." + baseExt));
+    try {
+      allCustomFieldsTemplate.process(allCustomFieldsInput, customFieldListFileWriter);
+    } catch (TemplateException e) {
+      e.printStackTrace();
+    } finally {
+      customFieldListFileWriter.close();
+    }
 
     //script file writer
     //Writer scriptListFileWriter = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\scriptList.html"));
@@ -1040,22 +1063,23 @@ public class CrawlerController {
       workflowInput.put("usesCustomParams",workflow.getUsesCustomParams());
       workflowInput.put("usesForms", workflow.getUsesForms());
 
-            workflowInput.put("fileBasedLinks",fileBasedLinks);
-            workflowInput.put("articleBaseUrl",articleBaseUrl);
-            workflowInput.put("imgBaseUrl",imgBaseUrl);
-            workflowInput.put("replaceSpacesInUrlsWith",replaceSpacesInUrlsWith);
-            workflowInput.put("usedInClickHelp",usedInClickHelp);
+      workflowInput.put("fileBasedLinks", fileBasedLinks);
+      workflowInput.put("articleBaseUrl", articleBaseUrl);
+      workflowInput.put("imgBaseUrl", imgBaseUrl);
+      workflowInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
+      workflowInput.put("usedInClickHelp", usedInClickHelp);
+      workflowInput.put("baseExt", baseExt);
 
-            //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\workflows\\" + workflow.getSystemId() + ".html"));
-            Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\workflows\\" + workflow.getSystemId() + ".html"));
-            try {
-                workflowTemplate.process(workflowInput, writer);
-            } catch (TemplateException e) {
-                e.printStackTrace();
-            } finally {
-                writer.close();
-            }
-        }
+      //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\workflows\\" + workflow.getSystemId() + ".html"));
+      Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\workflows\\" + workflow.getSystemId() + "." + baseExt));
+      try {
+        workflowTemplate.process(workflowInput, writer);
+      } catch (TemplateException e) {
+        e.printStackTrace();
+      } finally {
+        writer.close();
+      }
+    }
 
     //get custom params file writer
     for(Map.Entry<String, CustomParam> cpMap : customParams.entrySet()){
@@ -1071,25 +1095,26 @@ public class CrawlerController {
         cpInput.put("usedByScripts",cp.getUsedByScripts());
         cpInput.put("usedInWorkflows",cp.getUsedInWorkflows());
 
-                cpInput.put("fileBasedLinks",fileBasedLinks);
-                cpInput.put("articleBaseUrl",articleBaseUrl);
-                cpInput.put("imgBaseUrl",imgBaseUrl);
-                cpInput.put("replaceSpacesInUrlsWith",replaceSpacesInUrlsWith);
-                cpInput.put("usedInClickHelp",usedInClickHelp);
-                cpInput.put("workflowNames",workflowNames);
-                cpInput.put("workflowSystemIds",workflowSystemIds);
+        cpInput.put("fileBasedLinks", fileBasedLinks);
+        cpInput.put("articleBaseUrl", articleBaseUrl);
+        cpInput.put("imgBaseUrl", imgBaseUrl);
+        cpInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
+        cpInput.put("usedInClickHelp", usedInClickHelp);
+        cpInput.put("workflowNames", workflowNames);
+        cpInput.put("workflowSystemIds", workflowSystemIds);
+        cpInput.put("baseExt", baseExt);
 
-                //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\customparams\\" + cp.getName() + ".html"));
-                Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\customparams\\" + cp.getName().replaceAll("\\.", "-") + ".html"));
-                try {
-                    customParamTemplate.process(cpInput, writer);
-                } catch (TemplateException e) {
-                    e.printStackTrace();
-                } finally {
-                    writer.close();
-                }
-            }
+        //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\customparams\\" + cp.getName() + ".html"));
+        Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\customparams\\" + cp.getName().replaceAll("\\.", "-") + "." + baseExt));
+        try {
+          customParamTemplate.process(cpInput, writer);
+        } catch (TemplateException e) {
+          e.printStackTrace();
+        } finally {
+          writer.close();
         }
+      }
+    }
 
     //get custom fields file writer
     for(Map.Entry<String, CustomField> cfMap : customFieldSystemIds.entrySet()){
@@ -1109,32 +1134,37 @@ public class CrawlerController {
         cfInput.put("usedInWorkflow",cf.getUsedInWorkflow());
         cfInput.put("usedInForm", cf.getUsedInForms());
 
-                cfInput.put("fileBasedLinks",fileBasedLinks);
-                cfInput.put("articleBaseUrl",articleBaseUrl);
-                cfInput.put("imgBaseUrl",imgBaseUrl);
-                cfInput.put("replaceSpacesInUrlsWith",replaceSpacesInUrlsWith);
-                cfInput.put("usedInClickHelp",usedInClickHelp);
-                cfInput.put("workflowNames",workflowNames);
-                cfInput.put("workflowSystemIds",workflowSystemIds);
+        cfInput.put("fileBasedLinks", fileBasedLinks);
+        cfInput.put("articleBaseUrl", articleBaseUrl);
+        cfInput.put("imgBaseUrl", imgBaseUrl);
+        cfInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
+        cfInput.put("usedInClickHelp", usedInClickHelp);
+        cfInput.put("workflowNames", workflowNames);
+        cfInput.put("workflowSystemIds", workflowSystemIds);
+        cfInput.put("baseExt", baseExt);
 
-                //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\customfields\\" + cf.getSystemId() + ".html"));
-                Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\customfields\\" + cf.getSystemId() + ".html"));
-                try {
-                    customFieldTemplate.process(cfInput, writer);
-                } catch (TemplateException e) {
-                    e.printStackTrace();
-                } finally {
-                    writer.close();
-                }
-            }
+        //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\customfields\\" + cf.getSystemId() + ".html"));
+        Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\customfields\\" + cf.getSystemId() + "." + baseExt));
+        try {
+          customFieldTemplate.process(cfInput, writer);
+        } catch (TemplateException e) {
+          e.printStackTrace();
+        } finally {
+          writer.close();
         }
+      }
+    }
 
     //get scripts file writer
     for(Map.Entry<String, Script> scriptMap : scripts.entrySet()){
 
       Script script = scriptMap.getValue();
 
-            Map<String, Object> scriptInput = new HashMap<String, Object>();
+      Map<String, Object> scriptInput = new HashMap<String, Object>();
+      String previousTotal = String.valueOf(totalScriptLines);
+      System.out.println(script.getName() + ": " + script.getCodeLines());
+      totalScriptLines = totalScriptLines + script.getCodeLines();
+      System.out.println(previousTotal + " + " + script.getCodeLines() + " = " + totalScriptLines);
 
       scriptInput.put("name", script.getName());
       scriptInput.put("systemId", script.getSystemId());
@@ -1148,40 +1178,83 @@ public class CrawlerController {
       scriptInput.put("actionUsages",script.getActionUsages());
       scriptInput.put("usesCustomParams",script.getUsesCustomParams());
 
-            //format code for clickhelp
-            if(script.getCode() != null && !fileBasedLinks && usedInClickHelp){
-                scriptInput.put("code", script.getCode()
-                                .replaceAll("&","&amp;")
-                                .replaceAll("©","&copy;")
-                                .replaceAll("\t","&#9;")
-                                .replaceAll(">","&gt;")
-                                .replaceAll("<","&lt;")
-                                .replaceAll("\"","&quot;")
-                                .replaceAll("\\$","&dollar;")
-                        //.replaceAll("&dollar;\n&dollar;","")
-                );
-            }else{
-                scriptInput.put("code", script.getCode());
-            }
+      if (!script.getName().toLowerCase().contains("test")) {
 
-            scriptInput.put("fileBasedLinks",fileBasedLinks);
-            scriptInput.put("articleBaseUrl",articleBaseUrl);
-            scriptInput.put("imgBaseUrl",imgBaseUrl);
-            scriptInput.put("replaceSpacesInUrlsWith",replaceSpacesInUrlsWith);
-            scriptInput.put("usedInClickHelp",usedInClickHelp);
-            scriptInput.put("workflowNames",workflowNames);
-            scriptInput.put("workflowSystemIds",workflowSystemIds);
-
-            //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\scripts\\" + script.getSystemId() + ".html"));
-            Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\scripts\\" + script.getSystemId() + ".html"));
-            try {
-                scriptTemplate.process(scriptInput, writer);
-            } catch (TemplateException e) {
-                e.printStackTrace();
-            } finally {
-                writer.close();
-            }
+        //format code for clickhelp
+        if (script.getCode() != null && !fileBasedLinks && usedInClickHelp) {
+          scriptInput.put("code", script.getCode()
+                  .replaceAll("&", "&amp;")
+                  .replaceAll("©", "&copy;")
+                  .replaceAll("\t", "&#9;")
+                  .replaceAll(">", "&gt;")
+                  .replaceAll("<", "&lt;")
+                  .replaceAll("\"", "&quot;")
+                  .replaceAll("\\$", "&dollar;")
+              //.replaceAll("&dollar;\n&dollar;","")
+          );
+        } else {
+          scriptInput.put("code", script.getCode());
         }
+
+        scriptInput.put("fileBasedLinks", fileBasedLinks);
+        scriptInput.put("articleBaseUrl", articleBaseUrl);
+        scriptInput.put("imgBaseUrl", imgBaseUrl);
+        scriptInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
+        scriptInput.put("usedInClickHelp", usedInClickHelp);
+        scriptInput.put("workflowNames", workflowNames);
+        scriptInput.put("workflowSystemIds", workflowSystemIds);
+        scriptInput.put("baseExt", baseExt);
+
+        //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\scripts\\" + script.getSystemId() + ".html"));
+        Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\scripts\\" + script.getSystemId() + "." + baseExt));
+        try {
+          scriptTemplate.process(scriptInput, writer);
+        } catch (TemplateException e) {
+          e.printStackTrace();
+        } finally {
+          writer.close();
+        }
+      }
+    }
+
+    System.out.println("Total script lines: " + totalScriptLines.toString() + " in " + scripts.entrySet().size() + " scripts");
+
+    //get custom fields file writer
+    for (Map.Entry<String, Form> formMap : forms.entrySet()) {
+
+      Form form = formMap.getValue();
+
+      if (!StringUtils.isEmpty(form.getName())) {
+        Map<String, Object> formInput = new HashMap<String, Object>();
+
+        formInput.put("name", form.getName());
+        formInput.put("systemid", form.getSystemid());
+        formInput.put("description", form.getDescription());
+        formInput.put("actionUsages", form.getActionUsages());
+        formInput.put("usedInWorkflow", form.getUsedInWorkflows());
+        formInput.put("usesCustomFields", form.getUsesCustomFields());
+        formInput.put("formImage", form.getScreenshot().toString());
+
+        formInput.put("fileBasedLinks", fileBasedLinks);
+        formInput.put("articleBaseUrl", articleBaseUrl);
+        formInput.put("imgBaseUrl", imgBaseUrl);
+        formInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
+        formInput.put("usedInClickHelp", usedInClickHelp);
+        formInput.put("workflowNames", workflowNames);
+        formInput.put("workflowSystemIds", workflowSystemIds);
+        formInput.put("baseExt", baseExt);
+
+        //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\forms\\" + form.getSystemid() + ".html"));
+        Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\forms\\" + form.getSystemid() + "." + baseExt));
+        try {
+          formTemplate.process(formInput, writer);
+        } catch (TemplateException e) {
+          e.printStackTrace();
+        } finally {
+          writer.close();
+        }
+      }
+    }
 
     //exit system
     System.exit(0);
@@ -1276,14 +1349,15 @@ public class CrawlerController {
     //set button to not enabled
     crawlerGatherData.submitButton.setEnabled(false);
 
-        Map<String, JTextField> textFields = new HashMap<>();
-        textFields.put("urlInput",crawlerGatherData.urlInput);
-        textFields.put("usernameInput", crawlerGatherData.usernameInput);
-        textFields.put("passwordInput", crawlerGatherData.passwordInput);
-        textFields.put("tenantInput", crawlerGatherData.tenantInput);
-        textFields.put("chooseSaveDirectoryTextField", crawlerGatherData.chooseSaveDirectoryTextField);
-        textFields.put("articleUrlInput", crawlerGatherData.articleUrlInput);
-        textFields.put("imageUrlInput", crawlerGatherData.imageUrlInput);
+    Map<String, JTextField> textFields = new HashMap<>();
+    textFields.put("urlInput", crawlerGatherData.urlInput);
+    textFields.put("usernameInput", crawlerGatherData.usernameInput);
+    textFields.put("passwordInput", crawlerGatherData.passwordInput);
+    textFields.put("tenantInput", crawlerGatherData.tenantInput);
+    textFields.put("chooseSaveDirectoryTextField", crawlerGatherData.chooseSaveDirectoryTextField);
+    textFields.put("articleUrlInput", crawlerGatherData.articleUrlInput);
+    textFields.put("imageUrlInput", crawlerGatherData.imageUrlInput);
+    textFields.put("baseExt", crawlerGatherData.extInput);
 
     Map<String, JRadioButton> buttons = new HashMap<>();
     buttons.put("fileReferenceYes", crawlerGatherData.fileReferenceYes);

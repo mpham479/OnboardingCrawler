@@ -235,7 +235,7 @@
 				<tr class='${["odd", "even"][workflow_index%2]}' systemid='${workflow.systemId}'>
 					<td class="default">
 						<#if fileBasedLinks>
-		  					<a href="file:workflows/${workflow.systemId}.html">${(workflow.name)!" "}</a>
+							<a href="file:workflows/${workflow.systemId}.${baseExt}">${(workflow.name)!" "}</a>
 		  				<#else>
 		  					<a href="${articleBaseUrl + workflow.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(workflow.name)!" "}</a>
 		  				</#if>
@@ -309,7 +309,7 @@
 		function openModalInfo(ele){
 			var frameUrl = '';
 			<#if fileBasedLinks>
-		  		frameUrl = "file:workflows/" + ele.parentElement.parentElement.parentElement.getAttribute("systemid") + ".html"
+			frameUrl = "file:workflows/" + ele.parentElement.parentElement.parentElement.getAttribute("systemid") + ".${baseExt}"
 		  		modal.style.display = "block"
 		  		loading.style.display = "none"
 				document.getElementById('iframe').setAttribute("src",frameUrl);

@@ -173,6 +173,7 @@ public class ScriptCrawler {
         String scriptDesctipion = "";
         String type = "";
         String scriptCode = "";
+        Integer scriptCodeLines = 0;
 
         //get id
         String id = String.valueOf(((JavascriptExecutor) driver).executeScript(root + ".data.id"));
@@ -196,9 +197,8 @@ public class ScriptCrawler {
         //wait until javascript does not return null
         new WebDriverWait(driver,20).until(ExpectedConditions.jsReturnsValue("return currentScript"));
 
-        if(!lastScript) {
             //loop until current script changes
-            for (int counter = 0; counter < 10; counter++) {
+        for (int counter = 0; counter < 100; counter++) {
                 if (id.equalsIgnoreCase(String.valueOf(((JavascriptExecutor) driver).executeScript("return currentScript.id")))) {
                     break;
                 } else {
@@ -214,7 +214,6 @@ public class ScriptCrawler {
             if (!id.equalsIgnoreCase(String.valueOf(((JavascriptExecutor) driver).executeScript("return currentScript.id")))) {
                 throw new RuntimeException("CurrentScript does not change.");
             }
-        }
 
         //get currentscript data
         scriptName = nullCheck(String.valueOf(((JavascriptExecutor) driver).executeScript("return currentScript.name")));
@@ -222,17 +221,21 @@ public class ScriptCrawler {
         scriptDesctipion = nullCheck(String.valueOf(((JavascriptExecutor) driver).executeScript("return currentScript.description")));
         type = nullCheck(String.valueOf(((JavascriptExecutor) driver).executeScript("return currentScript.type")));
         scriptCode = nullCheck(String.valueOf(((JavascriptExecutor) driver).executeScript("return currentScript.code")));
+        scriptCodeLines = Integer.parseInt(nullCheck(String.valueOf(((JavascriptExecutor) driver).executeScript("return (currentScript.code.match(/\\n/g)||[]).length + 1"))));
 
+        System.out.println(scriptName + ": " + id);
+
+        //check if test scripts
         //create a new script instance
         Script script;
 
-        if(scripts.containsKey(scriptSystemId)) {
+        if (scripts.containsKey(scriptSystemId)) {
             //get script
             script = scripts.get(scriptSystemId);
-        }else{
+        } else {
             //new script
             script = new Script();
-            scripts.put(scriptSystemId,script);
+            scripts.put(scriptSystemId, script);
         }
 
         //set data
@@ -242,8 +245,9 @@ public class ScriptCrawler {
         script.setDescription(scriptDesctipion);
         script.setType(String.valueOf(SCRIPTTYPES.of(type)));
         script.setCode(scriptCode);
+        script.setCodeLines(scriptCodeLines);
 
-        //check if test scripts
+
         if(!testFlag && !scriptName.toLowerCase().contains("test")){
             //get workflows used
             getWorkflowsUsed(scriptSystemId,script);
@@ -288,7 +292,7 @@ public class ScriptCrawler {
         //set progress bar
         data.scriptProgress.setValue(currentPercentageRounded);
         data.scriptProgress.setString(String.format("%d%% (%d/%d)",currentPercentageRounded,currentScriptNumber, totalNumberofScripts));
-        data.scriptList.append(script.name + "\n");
+        data.scriptList.append(scriptName + "\n");
         data.scriptScroll.getViewport().setViewPosition(new Point(0,data.scriptList.getDocument().getLength()));
 
         //return script id
@@ -297,7 +301,7 @@ public class ScriptCrawler {
 
     public static void getWorkflowsUsed(String scriptSystemId, Script script){
         //check if scheduled task
-        if(script.getType().equalsIgnoreCase("Scheduled_Task")){
+        if (script.getType().equalsIgnoreCase("Scheduled_Task") && !script.getName().toLowerCase().contains("test")) {
             try{
                 //get name
                 String workflowSysId = script.getName().substring(0,script.getName().indexOf(" ")).replaceAll("/[&\\/\\\\#,+()$~%.'\":*?<>{} _-]/g","");

@@ -101,6 +101,7 @@ public class Script {
     private String description;
     private String type;
     private String code;
+    private Integer codeLines;
     public HashMap<String, Script> usesScripts = new HashMap<>();            //systemid, script
     public HashMap<String, Script> usedByScripts = new HashMap<>();            //systemid, script
     private HashMap<String, CustomField> usesCustomFields = new HashMap<>();    //systemid, customfield
@@ -139,6 +140,10 @@ public class Script {
 
     public String getCode(){
         return this.code;
+    }
+
+    public Integer getCodeLines() {
+        return this.codeLines;
     }
 
     public HashMap<String, Script> getUsesScripts(){
@@ -195,6 +200,10 @@ public class Script {
 
     public void setCode(String code){
         this.code = code;
+    }
+
+    public void setCodeLines(Integer codeLines) {
+        this.codeLines = codeLines;
     }
 
     public void addUsedScripts(String systemId, Script script){

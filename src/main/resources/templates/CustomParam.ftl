@@ -274,7 +274,7 @@
 						<tr class='${["scriptOdd", "scriptEven"][uses_index%2]}'>
 			  				<td class="default">
 			  					<#if fileBasedLinks>
-			  						<a href="file:../scripts/${uses.systemId}.html">${(uses.name)!uses.systemId}</a>
+									<a href="file:../scripts/${uses.systemId}.${baseExt}">${(uses.name)!uses.systemId}</a>
 			  					<#else>
 			  						<a href="${articleBaseUrl + uses.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${(uses.name)!uses.systemId}</a>
 			  					</#if>
@@ -303,7 +303,7 @@
 								<tr class='${["scriptOdd", "scriptEven"][usage_index%2]}'>
 									<td class="default">
 										<#if fileBasedLinks>
-											<a href="file:../workflows/${usage.systemId}.html">${usage.name}</a>
+											<a href="file:../workflows/${usage.systemId}.${baseExt}">${usage.name}</a>
 					  					<#else>
 					  						<a href="${articleBaseUrl + usage.systemId?replace('_',replaceSpacesInUrlsWith,'r')}">${usage.name}</a>
 					  					</#if>
