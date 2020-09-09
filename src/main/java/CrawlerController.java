@@ -722,6 +722,32 @@ public class CrawlerController {
       //crawl forms
       es.execute(new Runnable() {
         public void run() {
+          //highlight errored tab
+          progressData.processes.setBackgroundAt(progressData.processes.indexOfComponent(progressData.formData),Color.RED);
+
+          Highlighter highlighter = progressData.formList.getHighlighter();
+          Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+          int currentIndex = progressData.formList.getText().length();
+
+          String msg = "Form documenting disabled due to Workflow changes.";
+          progressData.formList.append(msg);
+
+          try {
+            highlighter.addHighlight(currentIndex, currentIndex + msg.length(), painter);
+          } catch (BadLocationException e) {
+            e.printStackTrace();
+          }
+
+          //hide loading, show progress list since this is where the error will be
+          progressData.formLoadingPanel.setVisible(false);
+          progressData.formProgressPanel.setVisible(true);
+        }
+      });
+
+      /*
+      //crawl forms
+      es.execute(new Runnable() {
+        public void run() {
           try {
             formCrawler.startFormCrawling(progressData);
           } catch (InterruptedException ie) {
@@ -772,7 +798,7 @@ public class CrawlerController {
             progressData.formProgressPanel.setVisible(true);
           }
         }
-      });
+      });*/
 
       es.shutdown();
       boolean finished = es.awaitTermination(30, TimeUnit.MINUTES);
@@ -1037,6 +1063,7 @@ public class CrawlerController {
       scriptListFileWriter.close();
     }
 
+    /*
     //form file writer
     //Writer formListFileWriter = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\formList.html"));
     Writer formListFileWriter = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\formList." + baseExt));
@@ -1047,6 +1074,7 @@ public class CrawlerController {
     } finally {
       formListFileWriter.close();
     }
+    */
 
     //get workflows file writer
     for(Map.Entry<String, Workflow> workflowEntrySet : workflowNames.entrySet()){
@@ -1155,71 +1183,10 @@ public class CrawlerController {
       }
     }
 
-    //get scripts file writer
-    for(Map.Entry<String, Script> scriptMap : scripts.entrySet()){
-
-      Script script = scriptMap.getValue();
-
-      Map<String, Object> scriptInput = new HashMap<String, Object>();
-      String previousTotal = String.valueOf(totalScriptLines);
-      System.out.println(script.getName() + ": " + script.getCodeLines());
-      totalScriptLines = totalScriptLines + script.getCodeLines();
-      System.out.println(previousTotal + " + " + script.getCodeLines() + " = " + totalScriptLines);
-
-      scriptInput.put("name", script.getName());
-      scriptInput.put("systemId", script.getSystemId());
-      scriptInput.put("type",script.getType());
-      scriptInput.put("description",script.getDescription());
-      scriptInput.put("allScripts",scripts);
-      scriptInput.put("usesScripts",script.getUsesScripts());
-      scriptInput.put("usedByScripts",script.getUsedByScripts());
-      scriptInput.put("usedInWorkflowName",script.getUsedInWorkflowName());
-      scriptInput.put("usesCustomFields",script.getUsesCustomFields());
-      scriptInput.put("actionUsages",script.getActionUsages());
-      scriptInput.put("usesCustomParams",script.getUsesCustomParams());
-
-      if (!script.getName().toLowerCase().contains("test")) {
-
-        //format code for clickhelp
-        if (script.getCode() != null && !fileBasedLinks && usedInClickHelp) {
-          scriptInput.put("code", script.getCode()
-                  .replaceAll("&", "&amp;")
-                  .replaceAll("©", "&copy;")
-                  .replaceAll("\t", "&#9;")
-                  .replaceAll(">", "&gt;")
-                  .replaceAll("<", "&lt;")
-                  .replaceAll("\"", "&quot;")
-                  .replaceAll("\\$", "&dollar;")
-              //.replaceAll("&dollar;\n&dollar;","")
-          );
-        } else {
-          scriptInput.put("code", script.getCode());
-        }
-
-        scriptInput.put("fileBasedLinks", fileBasedLinks);
-        scriptInput.put("articleBaseUrl", articleBaseUrl);
-        scriptInput.put("imgBaseUrl", imgBaseUrl);
-        scriptInput.put("replaceSpacesInUrlsWith", replaceSpacesInUrlsWith);
-        scriptInput.put("usedInClickHelp", usedInClickHelp);
-        scriptInput.put("workflowNames", workflowNames);
-        scriptInput.put("workflowSystemIds", workflowSystemIds);
-        scriptInput.put("baseExt", baseExt);
-
-        //Writer writer = new FileWriter(new File(System.getProperty("user.dir") + "\\documentation\\scripts\\" + script.getSystemId() + ".html"));
-        Writer writer = new FileWriter(new File(saveDirectory + "\\Onboarding Documentation\\scripts\\" + script.getSystemId() + "." + baseExt));
-        try {
-          scriptTemplate.process(scriptInput, writer);
-        } catch (TemplateException e) {
-          e.printStackTrace();
-        } finally {
-          writer.close();
-        }
-      }
-    }
-
     System.out.println("Total script lines: " + totalScriptLines.toString() + " in " + scripts.entrySet().size() + " scripts");
 
-    //get custom fields file writer
+    //get form file writer
+    /*
     for (Map.Entry<String, Form> formMap : forms.entrySet()) {
 
       Form form = formMap.getValue();
@@ -1255,6 +1222,7 @@ public class CrawlerController {
         }
       }
     }
+    */
 
     //exit system
     System.exit(0);

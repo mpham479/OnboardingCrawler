@@ -55,14 +55,14 @@ public class FormCrawler {
     driver = new ChromeWebDriver().setupDriver();
 
     //go to url
-    driver.get(CrawlerController.baseUrl + "showForms.do?method=prepare&tenantName=" + CrawlerController.tenant);
+    driver.get(CrawlerController.baseUrl + "sp/reusable-form/list");
 
-    new WebDriverWait(driver, 100).until(ExpectedConditions.jsReturnsValue("return document.getElementsByClassName('pagebanner')[0].innerText.substring(0,document.getElementsByClassName('pagebanner')[0].innerText.indexOf(' items found'))"));
+    new WebDriverWait(driver, 100).until(ExpectedConditions.jsReturnsValue("return document.getElementsByClassName('col-lg-12')[0].innerText.substring(0,document.getElementsByClassName('col-lg-12')[0].innerText.indexOf('of'))"));
 
     //check if all javascript has finished
     if (driver instanceof JavascriptExecutor) {
 
-      String numForms = String.valueOf(((JavascriptExecutor) driver).executeScript("return document.getElementsByClassName('pagebanner')[0].innerText.substring(0,document.getElementsByClassName('pagebanner')[0].innerText.indexOf(' items found'))"));
+      String numForms = String.valueOf(((JavascriptExecutor) driver).executeScript("return document.getElementsByClassName('col-lg-12')[0].innerText.substring(document.getElementsByClassName('col-lg-12')[0].innerText.indexOf('of')+3,document.getElementsByClassName('col-lg-12')[0].length)"));
 
       //ajax call
       String javascript = "$.ajax({\n" +

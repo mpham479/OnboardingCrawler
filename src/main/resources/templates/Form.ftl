@@ -202,7 +202,7 @@
     }
 
     .imgOn, .imgHover:hover .imgOff {
-        display: inline-block;
+        display: none;
     }
 
 
@@ -355,7 +355,7 @@
 
             <div class="content" style="text-align: center">
                 <#if fileBasedLinks>
-                    <img src="../images/${systemid}.png"/>
+                    <img src="images/${systemid}.png"/>
                 <#else>
                     <img src="${articleBaseUrl + systemid}.png"/>
                 </#if>
@@ -447,8 +447,8 @@
                     try {
                         thead.getElementsByTagName("TH")[j].setAttribute("sortdir", dir)
                         <#if fileBasedLinks>
-                        thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOn")[0].setAttribute("src", "../images/" + dir + "SortArrow.png");
-                        thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOff")[0].setAttribute("src", "../images/" + dir + "SortArrowHover.png");
+                        thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOn")[0].setAttribute("src", "images/" + dir + "SortArrow.png");
+                        thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOff")[0].setAttribute("src", "images/" + dir + "SortArrowHover.png");
                         <#else>
                         thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOn")[0].setAttribute("src", "${imgBaseUrl}" + dir + "SortArrow.png");
                         thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOff")[0].setAttribute("src", "${imgBaseUrl}" + dir + "SortArrowHover.png");

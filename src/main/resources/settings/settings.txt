@@ -1,10 +1,10 @@
 baseUrl=https://demo.webcomserver.com/wpm/
-username=mpham
-password=Welcome@1
+username=jcoker
+password=n3wcsiJC
 tenant=cald_onboarding
-saveDirectory=C:\Users\I869252\Downloads\TestDocumentSP
+saveDirectory=C:\Users\I868778\Downloads\Crawler
 fileBasedLinks=true
 usedInClickHelp=true
-articleBaseUrl=/articles/project-onboarding-standards/
-imgBaseUrl=/resources/Storage/project-onboarding-standards/documentation/
+articleBaseUrl=/articles/#!onboarding-standards-publication/
+imgBaseUrl=/resources/Storage/onboarding-standards-publication/images/
 baseExt=html

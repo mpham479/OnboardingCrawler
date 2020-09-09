@@ -14,7 +14,7 @@ public class ChromeWebDriver {
 
         ChromeOptions options = new ChromeOptions();
         //options.addArguments("headless");
-        options.addArguments("window-size=1500,1500");
+        options.addArguments("window-size=1920,1080");
         options.addArguments("--hide-scrollbars");
 
         System.setProperty("webdriver.chrome.driver", CrawlerController.chromeDriverLocation);
@@ -33,12 +33,12 @@ public class ChromeWebDriver {
         );
         //set username and password
         driver.findElement(By.name("loginname")).sendKeys(CrawlerController.username);
-        ((JavascriptExecutor) driver).executeScript("document.getElementById(\"passwordInput\").value = '" + CrawlerController.password + "'");
+        ((JavascriptExecutor) driver).executeScript("document.getElementById(\"passwordField\").value = '" + CrawlerController.password + "'");
         //driver.findElement(By.name("password")).sendKeys(password);
         //driver.findElement(By.name("tenantName")).sendKeys(tenant);
 
         //click submit button when clickable
-        new WebDriverWait(driver, 10).until(ExpectedConditions.elementToBeClickable(By.className("btn"))).click();
+        new WebDriverWait(driver, 10).until(ExpectedConditions.elementToBeClickable(By.className("loginSubmitButton"))).click();
 
         return driver;
     }

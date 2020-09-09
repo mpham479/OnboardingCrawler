@@ -108,7 +108,7 @@
    		display:none;
 	}
 	.imgOn, .imgHover:hover .imgOff{
-	   display:inline-block;
+	   display:none;
 	}
 
 
@@ -172,17 +172,16 @@
 		padding: 10px 20px 20px 20px;
 		border: 1px solid #888;
 		width: 80%;
-		height: 700px;
+		height: 750px;
 	}
 	
 	/* Adjustable Modal Content */
 	.adjusted-modal-content {
 		background-color: #fefefe;
-		margin: 20px 0px 0px -5px;
 		padding: 0px;
 		border: 0px;
 		width: 100%;
-		height: 100%;
+		height: 700px;
 		display: inherit;
 	}
 
@@ -236,7 +235,7 @@
 				<tr class='${["odd", "even"][customparam_index%2]}' systemid='${customparam.name}'>
 					<td class="default">
 						<#if fileBasedLinks>
-							<a href="file:customparams/${customparam.name}.${baseExt}">${(customparam.name)!" "}</a>
+							<a href="file:customparams/${customparam.name?replace('.','-')}.${baseExt}">${(customparam.name)!" "}</a>
 		  				<#else>
 		  					<a href="${articleBaseUrl + customparam.name?replace('_',replaceSpacesInUrlsWith,'r')?replace('.','-')}">${(customparam.name)!" "}</a>
 		  				</#if>
@@ -561,8 +560,8 @@
             try{
             	thead.getElementsByTagName("TH")[j].setAttribute("sortdir",dir)
 				<#if fileBasedLinks>
-					thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOn")[0].setAttribute("src","../images/" + dir + "SortArrow.png");
-					thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOff")[0].setAttribute("src","../images/" + dir + "SortArrowHover.png");
+					thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOn")[0].setAttribute("src","images/" + dir + "SortArrow.png");
+					thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOff")[0].setAttribute("src","images/" + dir + "SortArrowHover.png");
 			  	<#else>
 					thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOn")[0].setAttribute("src","${imgBaseUrl}" + dir + "SortArrow.png");
 					thead.getElementsByTagName("TH")[j].getElementsByClassName("imgOff")[0].setAttribute("src","${imgBaseUrl}" + dir + "SortArrowHover.png");

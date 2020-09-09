@@ -183,9 +183,7 @@ public class ScriptCrawler {
                 "        type: 'post',\n" +
                 "        scriptCharset: \"utf-8\",\n" +
                 "        //contentType: \"text/html;charset=UTF-8\",\n" +
-                "        success: function(htmlContent, textStatus) {\n" +
-                "            currentScript = eval(\"(\" + eval(\"(\\\"\" + htmlContent.substring(50,htmlContent.indexOf(\"\\\", \\\"true\\\");\\n\\tif (modalDivs == null || modalDivs.length == 0){\")) + \"\\\")\") + \")\")\n" +
-                "        },\n" +
+                "        success: function(htmlContent, textStatus) {$(\"#xxx\").html(htmlContent);},\n" +
                 "        data: app.addGlobalParams('method=edit&fromScriptIDE=true&scriptId=" + id + "&checkForDraft=false&ajaxRequest=true'),\n" +
                 "        dataType: 'html',\n" +
                 "        beforeSend: function(jqXJR, settings) {\n" +
@@ -195,7 +193,7 @@ public class ScriptCrawler {
                 "    });");
 
         //wait until javascript does not return null
-        new WebDriverWait(driver,20).until(ExpectedConditions.jsReturnsValue("return currentScript"));
+        new WebDriverWait(driver,60).until(ExpectedConditions.jsReturnsValue("return currentScript"));
 
             //loop until current script changes
         for (int counter = 0; counter < 100; counter++) {
